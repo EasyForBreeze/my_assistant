@@ -27,24 +27,26 @@
             </h1>
             <p class="text-gray-400 text-lg">Управление вашими Keycloak клиентами и доступом к ним.</p>
         </div>
-        @if (UserRoleService.IsUser() || UserRoleService.IsAdmin())
-        {
-            <div class="flex space-x-4">
-                <button class="btn-primary flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Создать клиента
-                </button>
-            </div>
-        }
+        <div class="flex justify-end">
+            <button class="create-client-btn">
+                <div class="btn-content">
+                    <div class="btn-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                    </div>
+                    <span class="btn-text">Создать клиента</span>
+                    <div class="btn-shine"></div>
+                </div>
+            </button>
+        </div>
     </div>
 </div>
 
-<!-- Stats Section -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<!-- Статистика клиентов -->
+<div class="flex flex-wrap gap-6 mb-8">
     <!-- Мои клиенты -->
-    <div class="card stat-card-blue p-6 flex items-center space-x-4 animate-stagger">
+    <div class="card stat-card-blue p-6 flex items-center space-x-4 animate-stagger flex-1 min-w-0">
         <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 text-xl">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
@@ -57,7 +59,7 @@
     </div>
 
     <!-- Доступные клиенты -->
-    <div class="card stat-card-green p-6 flex items-center space-x-4 animate-stagger">
+    <div class="card stat-card-green p-6 flex items-center space-x-4 animate-stagger flex-1 min-w-0">
         <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center text-green-400 text-xl">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -70,7 +72,7 @@
     </div>
 
     <!-- Активные -->
-    <div class="card stat-card-orange p-6 flex items-center space-x-4 animate-stagger">
+    <div class="card stat-card-orange p-6 flex items-center space-x-4 animate-stagger flex-1 min-w-0">
         <div class="w-12 h-12 bg-orange-500/20 rounded-full flex items-center justify-center text-orange-400 text-xl">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
@@ -81,37 +83,18 @@
             <p class="text-sm text-orange-300">Активные</p>
         </div>
     </div>
-
-    <!-- Заблокированные -->
-    <div class="card stat-card-red p-6 flex items-center space-x-4 animate-stagger">
-        <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center text-red-400 text-xl">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-            </svg>
-        </div>
-        <div>
-            <p class="text-2xl font-bold text-white">1</p>
-            <p class="text-sm text-red-300">Заблокированные</p>
-        </div>
-    </div>
 </div>
 
-<!-- Clients List -->
+<!-- Мои клиенты -->
 <div class="card p-6">
     <div class="flex items-center justify-between mb-6">
-        <h3 class="text-xl font-semibold text-white">Список клиентов</h3>
+        <h3 class="text-xl font-semibold text-white">Мои клиенты</h3>
         <div class="flex space-x-2">
             <button class="btn-secondary text-sm">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
                 </svg>
                 Фильтр
-            </button>
-            <button class="btn-secondary text-sm">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                </svg>
-                Экспорт
             </button>
         </div>
     </div>
@@ -180,6 +163,81 @@
                             </svg>
                             <p class="text-lg mb-2">У вас пока нет клиентов</p>
                             <p class="text-sm">Создайте свой первый Keycloak клиент, чтобы начать работу</p>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Доступные мне клиенты -->
+<div class="card p-6 mt-6">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-semibold text-white">Доступные мне клиенты</h3>
+        <span class="text-sm text-gray-400">Клиенты, к которым вам предоставлен доступ администратором</span>
+    </div>
+    
+    <!-- Table -->
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="border-b border-gray-700">
+                    <th class="text-left py-3 px-4 text-gray-300 font-medium">Название</th>
+                    <th class="text-left py-3 px-4 text-gray-300 font-medium">Владелец</th>
+                    <th class="text-left py-3 px-4 text-gray-300 font-medium">Тип</th>
+                    <th class="text-left py-3 px-4 text-gray-300 font-medium">Статус</th>
+                    <th class="text-left py-3 px-4 text-gray-300 font-medium">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Пример доступного клиента -->
+                <tr class="border-b border-gray-800 hover:bg-gray-800/30 transition-colors">
+                    <td class="py-4 px-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-white font-medium">shared-api-client</p>
+                                <p class="text-sm text-gray-400">API для общего использования</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-4 px-4">
+                        <span class="text-gray-300">admin@company.com</span>
+                    </td>
+                    <td class="py-4 px-4">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-900/50 text-purple-300">
+                            Bearer-only
+                        </span>
+                    </td>
+                    <td class="py-4 px-4">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-900/50 text-green-300">
+                            Активен
+                        </span>
+                    </td>
+                    <td class="py-4 px-4">
+                        <div class="flex space-x-2">
+                            <button class="text-blue-400 hover:text-blue-300 text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                
+                <!-- Пустое состояние для доступных клиентов -->
+                <tr>
+                    <td colspan="5" class="py-8 text-center">
+                        <div class="text-gray-500">
+                            <svg class="w-8 h-8 mx-auto mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p class="text-sm">Нет доступных клиентов</p>
                         </div>
                     </td>
                 </tr>

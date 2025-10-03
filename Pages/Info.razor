@@ -1,0 +1,208 @@
+@page "/info"
+@using new_assistant.Core.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@inject IUserRoleService UserRoleService
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>Информация о системе - KeyCloak Assistant</PageTitle>
+
+@{
+    var isAuthenticated = HttpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true;
+    
+    if (!isAuthenticated)
+    {
+        // Если пользователь не авторизован, перенаправляем на авторизацию через Keycloak
+        Navigation.NavigateTo("/api/auth/login", forceLoad: true);
+        return;
+    }
+    
+    if (!UserRoleService.IsAdmin())
+    {
+        // Если пользователь не администратор, перенаправляем на главную страницу
+        Navigation.NavigateTo("/", forceLoad: true);
+        return;
+    }
+}
+
+<!-- Для администраторов показываем системную информацию -->
+<div class="mb-8 animate-stagger">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-4xl font-bold gradient-text mb-2">
+                Информация о системе
+            </h1>
+            <p class="text-gray-400 text-lg">Мониторинг состояния KeyCloak Assistant и связанных сервисов.</p>
+        </div>
+        <div class="flex justify-end">
+            <button class="create-client-btn">
+                <div class="btn-content">
+                    <div class="btn-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                    </div>
+                    <span class="btn-text">Создать клиента</span>
+                    <div class="btn-shine"></div>
+                </div>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Section для администраторов -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Клиенты -->
+    <div class="card stat-card-blue p-6 flex items-center space-x-4 animate-stagger">
+        <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 text-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            </svg>
+        </div>
+        <div>
+            <p class="text-2xl font-bold text-white">12</p>
+            <p class="text-sm text-blue-300">Активных клиентов</p>
+        </div>
+    </div>
+
+    <!-- Фоновые задачи -->
+    <div class="card stat-card-orange p-6 flex items-center space-x-4 animate-stagger">
+        <div class="w-12 h-12 bg-orange-500/20 rounded-full flex items-center justify-center text-orange-400 text-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+        </div>
+        <div>
+            <p class="text-2xl font-bold text-white">3</p>
+            <p class="text-sm text-orange-300">Задач в очереди</p>
+        </div>
+    </div>
+
+    <!-- Состояние KeyCloak -->
+    <div class="card stat-card-green p-6 flex items-center space-x-4 animate-stagger">
+        <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center text-green-400 text-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+        </div>
+        <div>
+            <p class="text-2xl font-bold text-white">Online</p>
+            <p class="text-sm text-green-300">KeyCloak сервер</p>
+        </div>
+    </div>
+
+    <!-- База данных -->
+    <div class="card stat-card-purple p-6 flex items-center space-x-4 animate-stagger">
+        <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center text-purple-400 text-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
+            </svg>
+        </div>
+        <div>
+            <p class="text-2xl font-bold text-white">98%</p>
+            <p class="text-sm text-purple-300">Использование БД</p>
+        </div>
+    </div>
+</div>
+
+<!-- System Status Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Состояние сервисов -->
+    <div class="card p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-semibold text-white">Состояние сервисов</h3>
+            <span class="text-xs text-gray-400">Обновлено 2 мин назад</span>
+        </div>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between p-3 rounded-lg bg-gray-700/30">
+                <div class="flex items-center space-x-3">
+                    <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                    <span class="text-gray-200">KeyCloak Server</span>
+                </div>
+                <span class="text-green-400 text-sm font-medium">Активен</span>
+            </div>
+            <div class="flex items-center justify-between p-3 rounded-lg bg-gray-700/30">
+                <div class="flex items-center space-x-3">
+                    <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                    <span class="text-gray-200">PostgreSQL</span>
+                </div>
+                <span class="text-green-400 text-sm font-medium">Активен</span>
+            </div>
+            <div class="flex items-center justify-between p-3 rounded-lg bg-gray-700/30">
+                <div class="flex items-center space-x-3">
+                    <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                    <span class="text-gray-200">Hangfire</span>
+                </div>
+                <span class="text-green-400 text-sm font-medium">Активен</span>
+            </div>
+            <div class="flex items-center justify-between p-3 rounded-lg bg-gray-700/30">
+                <div class="flex items-center space-x-3">
+                    <div class="w-3 h-3 bg-orange-400 rounded-full animate-pulse"></div>
+                    <span class="text-gray-200">Redis Cache</span>
+                </div>
+                <span class="text-orange-400 text-sm font-medium">Недоступен</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Системные ресурсы -->
+    <div class="card p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-semibold text-white">Системные ресурсы</h3>
+            <button class="text-blue-400 hover:text-blue-300 text-sm">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Обновить
+            </button>
+        </div>
+        <div class="space-y-4">
+            <!-- CPU -->
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-300">CPU</span>
+                    <span class="text-white">45%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-2">
+                    <div class="bg-blue-500 h-2 rounded-full" style="width: 45%"></div>
+                </div>
+            </div>
+            
+            <!-- Memory -->
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-300">Память</span>
+                    <span class="text-white">72%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-2">
+                    <div class="bg-green-500 h-2 rounded-full" style="width: 72%"></div>
+                </div>
+            </div>
+            
+            <!-- Disk -->
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-300">Диск</span>
+                    <span class="text-white">28%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-2">
+                    <div class="bg-purple-500 h-2 rounded-full" style="width: 28%"></div>
+                </div>
+            </div>
+            
+            <!-- Network -->
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-300">Сеть</span>
+                    <span class="text-white">15%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-2">
+                    <div class="bg-orange-500 h-2 rounded-full" style="width: 15%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+}
