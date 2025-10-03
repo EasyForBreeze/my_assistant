@@ -54,24 +54,27 @@
 <!-- Search Section - Clean Minimalist Style -->
 <div class="mb-8">
     <!-- Search Container -->
-    <div class="bg-gray-800/30 rounded-xl p-6 border border-gray-700/50 backdrop-blur-sm">
+    <div class="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-r from-purple-500/50 via-sky-500/40 to-fuchsia-500/50 shadow-[0_0_35px_-15px_rgba(168,85,247,0.8)]">
+        <div class="absolute -top-24 -right-16 w-64 h-64 bg-purple-500/30 rounded-full blur-3xl opacity-70 pointer-events-none"></div>
+        <div class="absolute -bottom-32 -left-12 w-72 h-72 bg-sky-500/20 rounded-full blur-3xl opacity-70 pointer-events-none"></div>
+        <div class="relative bg-gray-900/80 backdrop-blur-xl rounded-[1.4rem] p-6 border border-white/5">
         <!-- Header -->
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500/40 to-purple-500/40 border border-white/10 rounded-xl flex items-center justify-center shadow-[0_8px_20px_-12px_rgba(56,189,248,1)]">
+                    <svg class="w-5 h-5 text-sky-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                 </div>
                 <div>
-                    <h3 class="text-lg font-semibold text-white">Поиск клиентов</h3>
-                    <p class="text-sm text-gray-400">По всем реалмам Keycloak</p>
+                    <h3 class="text-lg font-semibold text-white tracking-wide">Поиск клиентов</h3>
+                    <p class="text-sm text-slate-300/80">По всем реалмам Keycloak</p>
                 </div>
             </div>
             @if (!string.IsNullOrEmpty(searchQuery))
             {
                 <button @onclick="ClearSearch"
-                        class="px-3 py-1.5 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 rounded-lg transition-all duration-200 flex items-center space-x-2">
+                        class="px-3 py-1.5 text-sm bg-gradient-to-r from-rose-500/30 to-orange-500/30 hover:from-rose-500/40 hover:to-orange-500/40 text-rose-200 rounded-lg transition-all duration-200 flex items-center space-x-2 border border-white/10">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -83,7 +86,7 @@
         <!-- Search Input -->
         <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="h-5 w-5 text-slate-300/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                 </svg>
             </div>
@@ -91,14 +94,14 @@
                    @bind="searchQuery"
                    @onkeypress="@(async (e) => { if (e.Key == "Enter") await SearchClients(); })"
                    placeholder="Введите название клиента, реалм или тип..."
-                   class="w-full pl-10 pr-32 py-3 bg-gradient-to-r from-gray-800/60 via-gray-800/40 to-gray-800/60 border border-gray-700/60 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-500/60 transition-all duration-200">
+                   class="w-full pl-12 pr-36 py-3.5 bg-gradient-to-r from-slate-900/70 via-slate-900/40 to-slate-900/70 border border-transparent rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-500/30 focus:border-purple-400/70 transition-all duration-300 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.25),0_12px_25px_-20px_rgba(99,102,241,1)]">
             <div class="absolute inset-y-0 right-3 flex items-center space-x-2">
                 @if (!string.IsNullOrWhiteSpace(searchQuery))
                 {
-                    <div class="hidden sm:flex items-center text-xs text-gray-400 bg-gray-800/60 px-2 py-1 rounded-lg border border-gray-700/60">Enter ↵</div>
+                    <div class="hidden sm:flex items-center text-xs text-slate-200/80 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 shadow-[0_5px_15px_-12px_rgba(148,163,184,0.8)]">Enter ↵</div>
                 }
                 <button type="button"
-                        class="px-3 py-1.5 rounded-lg bg-blue-500/80 hover:bg-blue-500 text-white text-sm font-medium transition"
+                        class="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 hover:from-blue-400 hover:via-indigo-400 hover:to-purple-400 text-white text-sm font-semibold transition-all duration-200 shadow-[0_10px_25px_-15px_rgba(99,102,241,1)]"
                         @onclick="SearchClients">
                     Найти
                 </button>
@@ -107,14 +110,14 @@
 
         <!-- Quick Search Tags -->
         <div class="mt-4">
-            <p class="text-sm text-gray-500 mb-2">Популярные запросы:</p>
-            <div class="flex flex-wrap gap-2">
+            <p class="text-sm text-slate-300/70 mb-3 uppercase tracking-[0.18em]">Популярные запросы</p>
+            <div class="flex flex-wrap gap-2.5">
                 @foreach (var suggestion in quickSuggestions)
                 {
                     <button @onclick="@(async () => { searchQuery = suggestion.Query; await SearchClients(); })"
-                            class=@($"px-3 py-1.5 text-xs rounded-md transition-all duration-200 border flex items-center space-x-1 {suggestion.ClassName}")>
+                            class=@($"group px-3.5 py-1.5 text-xs rounded-xl transition-all duration-300 border border-white/10 bg-white/5 hover:bg-white/10 flex items-center space-x-1.5 text-slate-200/90 shadow-[0_10px_30px_-18px_rgba(79,70,229,0.7)] {suggestion.ClassName}")>
                         <span>@suggestion.Icon</span>
-                        <span>@suggestion.Label</span>
+                        <span class="transition-transform duration-300 group-hover:translate-x-0.5">@suggestion.Label</span>
                     </button>
                 }
             </div>
@@ -123,13 +126,14 @@
         <!-- Active Search Indicator -->
         @if (!string.IsNullOrEmpty(searchQuery))
         {
-            <div class="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                <div class="flex items-center space-x-2">
-                    <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                    <span class="text-sm text-blue-300">Поиск: <span class="font-medium text-blue-200">"@searchQuery"</span></span>
+            <div class="mt-5 p-3.5 bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-blue-500/20 rounded-xl shadow-[0_12px_30px_-20px_rgba(99,102,241,0.8)]">
+                <div class="flex items-center space-x-3">
+                    <div class="w-2.5 h-2.5 bg-gradient-to-r from-blue-400 via-cyan-300 to-purple-400 rounded-full animate-pulse shadow-[0_0_12px_rgba(59,130,246,0.9)]"></div>
+                    <span class="text-sm text-blue-200">Поиск: <span class="font-medium text-slate-50">"@searchQuery"</span></span>
                 </div>
             </div>
         }
+        </div>
     </div>
 </div>
 
