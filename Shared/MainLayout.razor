@@ -1,6 +1,8 @@
 @inherits LayoutComponentBase
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
+@inject IUserRoleService UserRoleService
+@using new_assistant.Core.Interfaces
 
 <!-- Красивые парящие шарики -->
 <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
@@ -253,8 +255,8 @@
                         </svg>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-gray-200 truncate">Администратор</p>
-                        <p class="text-xs text-gray-400 truncate">admin@keycloak.local</p>
+                        <p class="text-sm font-medium text-gray-200 truncate">@(UserRoleService.GetUserName() ?? "Пользователь")</p>
+                        <p class="text-xs text-gray-400 truncate">@(GetDisplayRole())</p>
                     </div>
                     <button class="p-1 rounded-lg hover:bg-gray-700/50 transition-colors" @onclick="LogoutAsync">
                         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -332,9 +334,21 @@
         _sidebarOpen = !_sidebarOpen;
     }
 
-    private void LogoutAsync()
+    private Task  LogoutAsync()
     {
         // Используем NavigationManager для перенаправления на logout
         Navigation.NavigateTo("/api/auth/logout", forceLoad: true);
+        return Task.CompletedTask;
+    }
+
+    private string GetDisplayRole()
+    {
+        var role = UserRoleService.GetUserRole();
+        return role switch
+        {
+            "assistant-admin" => "Администратор",
+            "assistant-user" => "Пользователь",
+            _ => "Роль не определена"
+        };
     }
 }

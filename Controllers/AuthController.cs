@@ -35,9 +35,6 @@ public class AuthController : ControllerBase
     [HttpGet("logout")]
     public IActionResult Logout()
     {
-        // Очищаем все cookie аутентификации
-        HttpContext.Session.Clear();
-        
         // Выполняем SignOut с перенаправлением на Keycloak logout
         return SignOut(new AuthenticationProperties
         {

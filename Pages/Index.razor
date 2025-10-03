@@ -17,25 +17,7 @@
         return;
     }
     
-    // Отладочная информация
-    var userId = UserRoleService.GetUserId();
-    var userName = UserRoleService.GetUserName();
-    var roles = UserRoleService.GetRoles();
-    var isUser = UserRoleService.IsUser();
-    var isAdmin = UserRoleService.IsAdmin();
 }
-
-<!-- Отладочная информация -->
-<div class="card p-4 mb-4 bg-yellow-900/20 border border-yellow-500/30">
-    <h3 class="text-lg font-semibold text-yellow-400 mb-2">Отладочная информация</h3>
-    <div class="text-sm text-gray-300 space-y-1">
-        <p><strong>ID пользователя:</strong> @userId</p>
-        <p><strong>Имя пользователя:</strong> @userName</p>
-        <p><strong>Роли:</strong> @string.Join(", ", roles)</p>
-        <p><strong>IsUser:</strong> @isUser</p>
-        <p><strong>IsAdmin:</strong> @isAdmin</p>
-    </div>
-</div>
 
 @if (UserRoleService.IsUser())
 {
@@ -49,20 +31,29 @@
                 <p class="text-gray-400 text-lg">Управление вашими Keycloak клиентами и доступом к ним.</p>
             </div>
             <div class="flex space-x-4">
-                <button class="btn-primary flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Создать клиента
+                <button class="group relative px-6 py-3 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 hover:from-blue-600 hover:via-purple-600 hover:to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-out overflow-hidden">
+                    <!-- Градиентный фон -->
+                    <div class="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-400 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    
+                    <!-- Контент кнопки -->
+                    <div class="relative flex items-center space-x-2">
+                        <svg class="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        <span class="text-sm font-medium">Создать клиента</span>
+                    </div>
+                    
+                    <!-- Блестящий эффект -->
+                    <div class="absolute inset-0 -top-2 -left-2 w-8 h-8 bg-white opacity-20 rounded-full transform rotate-45 group-hover:translate-x-32 group-hover:translate-y-32 transition-transform duration-700 ease-out"></div>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Stats Section для пользователей -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Статистика клиентов -->
+    <div class="flex flex-wrap gap-6 mb-8">
         <!-- Мои клиенты -->
-        <div class="card stat-card-blue p-6 flex items-center space-x-4 animate-stagger">
+        <div class="card stat-card-blue p-6 flex items-center space-x-4 animate-stagger flex-1 min-w-0">
             <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 text-xl">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
@@ -75,7 +66,7 @@
         </div>
 
         <!-- Доступные клиенты -->
-        <div class="card stat-card-green p-6 flex items-center space-x-4 animate-stagger">
+        <div class="card stat-card-green p-6 flex items-center space-x-4 animate-stagger flex-1 min-w-0">
             <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center text-green-400 text-xl">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -88,7 +79,7 @@
         </div>
 
         <!-- Активные -->
-        <div class="card stat-card-orange p-6 flex items-center space-x-4 animate-stagger">
+        <div class="card stat-card-orange p-6 flex items-center space-x-4 animate-stagger flex-1 min-w-0">
             <div class="w-12 h-12 bg-orange-500/20 rounded-full flex items-center justify-center text-orange-400 text-xl">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
@@ -99,52 +90,8 @@
                 <p class="text-sm text-orange-300">Активные</p>
             </div>
         </div>
-
-        <!-- Заблокированные -->
-        <div class="card stat-card-red p-6 flex items-center space-x-4 animate-stagger">
-            <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center text-red-400 text-xl">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                </svg>
-            </div>
-            <div>
-                <p class="text-2xl font-bold text-white">1</p>
-                <p class="text-sm text-red-300">Заблокированные</p>
-            </div>
-        </div>
     </div>
 
-    <!-- Help Section для пользователей -->
-    <div class="card p-6">
-        <h3 class="text-xl font-semibold text-white mb-4">Полезная информация</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <h4 class="text-lg font-medium text-gray-200 mb-2">Что такое Realm?</h4>
-                <p class="text-gray-400 text-sm mb-3">
-                    Realm - это пространство в Keycloak, где хранятся пользователи, клиенты и роли. 
-                    Это как отдельная база данных для вашей организации.
-                </p>
-                <h4 class="text-lg font-medium text-gray-200 mb-2">Типы клиентов</h4>
-                <ul class="text-gray-400 text-sm space-y-1">
-                    <li>• <strong>Public</strong> - для мобильных приложений</li>
-                    <li>• <strong>Confidential</strong> - для веб-приложений</li>
-                    <li>• <strong>Bearer-only</strong> - для API сервисов</li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="text-lg font-medium text-gray-200 mb-2">Роли и доступ</h4>
-                <p class="text-gray-400 text-sm mb-3">
-                    Вы можете создавать клиентов и редактировать только те, к которым у вас есть доступ. 
-                    Администраторы могут предоставить вам доступ к дополнительным клиентам.
-                </p>
-                <h4 class="text-lg font-medium text-gray-200 mb-2">Confluence Wiki</h4>
-                <p class="text-gray-400 text-sm">
-                    При создании или изменении клиента автоматически создается или обновляется страница в Confluence Wiki 
-                    с документацией по вашему клиенту.
-                </p>
-            </div>
-        </div>
-    </div>
 }
 else if (UserRoleService.IsAdmin())
 {
@@ -315,47 +262,6 @@ else if (UserRoleService.IsAdmin())
     </div>
 
     <!-- Recent Activity -->
-    <div class="card p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-xl font-semibold text-white">Последняя активность</h3>
-            <a href="/audit" class="text-blue-400 hover:text-blue-300 text-sm">
-                Показать все
-                <svg class="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </a>
-        </div>
-        <div class="space-y-3">
-            <div class="flex items-center space-x-3 p-3 rounded-lg bg-gray-700/30">
-                <div class="w-2 h-2 bg-green-400 rounded-full"></div>
-                <div class="flex-1">
-                    <p class="text-sm text-gray-200">Создан новый клиент "test-app"</p>
-                    <p class="text-xs text-gray-400">2 минуты назад</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-3 p-3 rounded-lg bg-gray-700/30">
-                <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
-                <div class="flex-1">
-                    <p class="text-sm text-gray-200">Выполнена синхронизация пользователей</p>
-                    <p class="text-xs text-gray-400">15 минут назад</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-3 p-3 rounded-lg bg-gray-700/30">
-                <div class="w-2 h-2 bg-orange-400 rounded-full"></div>
-                <div class="flex-1">
-                    <p class="text-sm text-gray-200">Обновлены настройки безопасности</p>
-                    <p class="text-xs text-gray-400">1 час назад</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-3 p-3 rounded-lg bg-gray-700/30">
-                <div class="w-2 h-2 bg-purple-400 rounded-full"></div>
-                <div class="flex-1">
-                    <p class="text-sm text-gray-200">Завершена очистка старых логов</p>
-                    <p class="text-xs text-gray-400">3 часа назад</p>
-                </div>
-            </div>
-        </div>
-    </div>
 }
 else
 {
@@ -371,13 +277,4 @@ else
         </div>
     </div>
     
-    <div class="card p-6">
-        <h3 class="text-xl font-semibold text-white mb-4">Информация о пользователе</h3>
-        <div class="text-gray-300 space-y-2">
-            <p><strong>ID:</strong> @userId</p>
-            <p><strong>Имя:</strong> @userName</p>
-            <p><strong>Роли:</strong> @string.Join(", ", roles)</p>
-            <p><strong>Статус авторизации:</strong> Авторизован</p>
-        </div>
-    </div>
 }
