@@ -1,0 +1,25 @@
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>Страница не найдена</PageTitle>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <div class="min-h-screen flex items-center justify-center bg-animated">
+                <div class="text-center">
+                    <div class="mb-8">
+                        <svg class="mx-auto h-24 w-24 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.467-.881-6.08-2.33.893-.533 1.963-.84 3.08-.84h6c1.117 0 2.187.307 3.08.84z" />
+                        </svg>
+                    </div>
+                    <h1 class="text-4xl font-bold gradient-text mb-4">404</h1>
+                    <p class="text-xl text-slate-300 mb-8">Страница не найдена</p>
+                    <a href="/" class="btn-primary">
+                        Вернуться на главную
+                    </a>
+                </div>
+            </div>
+        </LayoutView>
+    </NotFound>
+</Router>

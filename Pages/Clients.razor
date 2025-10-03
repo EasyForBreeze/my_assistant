@@ -1,0 +1,224 @@
+@page "/clients"
+@using new_assistant.Core.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@inject IUserRoleService UserRoleService
+@inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>Мои клиенты - KeyCloak Assistant</PageTitle>
+
+@{
+    var isAuthenticated = HttpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true;
+    
+    if (!isAuthenticated)
+    {
+        // Если пользователь не авторизован, перенаправляем на авторизацию через Keycloak
+        Navigation.NavigateTo("/api/auth/login", forceLoad: true);
+        return;
+    }
+}
+
+<!-- Hero Section -->
+<div class="mb-8 animate-stagger">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-4xl font-bold gradient-text mb-2">
+                Мои клиенты
+            </h1>
+            <p class="text-gray-400 text-lg">Управление вашими Keycloak клиентами и доступом к ним.</p>
+        </div>
+        @if (UserRoleService.IsUser() || UserRoleService.IsAdmin())
+        {
+            <div class="flex space-x-4">
+                <button class="btn-primary flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Создать клиента
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Stats Section -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Мои клиенты -->
+    <div class="card stat-card-blue p-6 flex items-center space-x-4 animate-stagger">
+        <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 text-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            </svg>
+        </div>
+        <div>
+            <p class="text-2xl font-bold text-white">3</p>
+            <p class="text-sm text-blue-300">Мои клиенты</p>
+        </div>
+    </div>
+
+    <!-- Доступные клиенты -->
+    <div class="card stat-card-green p-6 flex items-center space-x-4 animate-stagger">
+        <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center text-green-400 text-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+        </div>
+        <div>
+            <p class="text-2xl font-bold text-white">5</p>
+            <p class="text-sm text-green-300">Доступные мне</p>
+        </div>
+    </div>
+
+    <!-- Активные -->
+    <div class="card stat-card-orange p-6 flex items-center space-x-4 animate-stagger">
+        <div class="w-12 h-12 bg-orange-500/20 rounded-full flex items-center justify-center text-orange-400 text-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+        </div>
+        <div>
+            <p class="text-2xl font-bold text-white">4</p>
+            <p class="text-sm text-orange-300">Активные</p>
+        </div>
+    </div>
+
+    <!-- Заблокированные -->
+    <div class="card stat-card-red p-6 flex items-center space-x-4 animate-stagger">
+        <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center text-red-400 text-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+        </div>
+        <div>
+            <p class="text-2xl font-bold text-white">1</p>
+            <p class="text-sm text-red-300">Заблокированные</p>
+        </div>
+    </div>
+</div>
+
+<!-- Clients List -->
+<div class="card p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-semibold text-white">Список клиентов</h3>
+        <div class="flex space-x-2">
+            <button class="btn-secondary text-sm">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                </svg>
+                Фильтр
+            </button>
+            <button class="btn-secondary text-sm">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                </svg>
+                Экспорт
+            </button>
+        </div>
+    </div>
+    
+    <!-- Table -->
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="border-b border-gray-700">
+                    <th class="text-left py-3 px-4 text-gray-300 font-medium">Название</th>
+                    <th class="text-left py-3 px-4 text-gray-300 font-medium">Тип</th>
+                    <th class="text-left py-3 px-4 text-gray-300 font-medium">Статус</th>
+                    <th class="text-left py-3 px-4 text-gray-300 font-medium">Создан</th>
+                    <th class="text-left py-3 px-4 text-gray-300 font-medium">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Пример клиента -->
+                <tr class="border-b border-gray-800 hover:bg-gray-800/30 transition-colors">
+                    <td class="py-4 px-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-white font-medium">my-test-app</p>
+                                <p class="text-sm text-gray-400">Веб-приложение для тестирования</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-4 px-4">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-900/50 text-blue-300">
+                            Confidential
+                        </span>
+                    </td>
+                    <td class="py-4 px-4">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-900/50 text-green-300">
+                            Активен
+                        </span>
+                    </td>
+                    <td class="py-4 px-4 text-gray-400">2 дня назад</td>
+                    <td class="py-4 px-4">
+                        <div class="flex space-x-2">
+                            <button class="text-blue-400 hover:text-blue-300 text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                            <button class="text-red-400 hover:text-red-300 text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                
+                <!-- Пустое состояние -->
+                <tr>
+                    <td colspan="5" class="py-12 text-center">
+                        <div class="text-gray-400">
+                            <svg class="w-12 h-12 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                            <p class="text-lg mb-2">У вас пока нет клиентов</p>
+                            <p class="text-sm">Создайте свой первый Keycloak клиент, чтобы начать работу</p>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Help Section for Users -->
+@if (UserRoleService.IsUser())
+{
+    <div class="card p-6 mt-6">
+        <h3 class="text-xl font-semibold text-white mb-4">Полезная информация</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h4 class="text-lg font-medium text-gray-200 mb-2">Что такое Realm?</h4>
+                <p class="text-gray-400 text-sm mb-3">
+                    Realm - это пространство в Keycloak, где хранятся пользователи, клиенты и роли. 
+                    Это как отдельная база данных для вашей организации.
+                </p>
+                <h4 class="text-lg font-medium text-gray-200 mb-2">Типы клиентов</h4>
+                <ul class="text-gray-400 text-sm space-y-1">
+                    <li>• <strong>Public</strong> - для мобильных приложений</li>
+                    <li>• <strong>Confidential</strong> - для веб-приложений</li>
+                    <li>• <strong>Bearer-only</strong> - для API сервисов</li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-lg font-medium text-gray-200 mb-2">Роли и доступ</h4>
+                <p class="text-gray-400 text-sm mb-3">
+                    Вы можете создавать клиентов и редактировать только те, к которым у вас есть доступ. 
+                    Администраторы могут предоставить вам доступ к дополнительным клиентам.
+                </p>
+                <h4 class="text-lg font-medium text-gray-200 mb-2">Confluence Wiki</h4>
+                <p class="text-gray-400 text-sm">
+                    При создании или изменении клиента автоматически создается или обновляется страница в Confluence Wiki 
+                    с документацией по вашему клиенту.
+                </p>
+            </div>
+        </div>
+    </div>
+}
