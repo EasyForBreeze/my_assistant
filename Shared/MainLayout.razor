@@ -1,5 +1,6 @@
 @inherits LayoutComponentBase
 @inject IJSRuntime JS
+@inject NavigationManager Navigation
 
 <!-- Красивые парящие шарики -->
 <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
@@ -331,8 +332,9 @@
         _sidebarOpen = !_sidebarOpen;
     }
 
-    private async Task LogoutAsync()
+    private void LogoutAsync()
     {
-        await JS.InvokeVoidAsync("location.assign", "/Account/Logout");
+        // Используем NavigationManager для перенаправления на logout
+        Navigation.NavigateTo("/api/auth/logout", forceLoad: true);
     }
 }

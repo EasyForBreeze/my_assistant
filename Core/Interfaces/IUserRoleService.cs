@@ -38,6 +38,12 @@ public interface IUserRoleService
     string? GetUserId();
     
     /// <summary>
+    /// Получает все роли текущего пользователя.
+    /// </summary>
+    /// <returns>Список ролей пользователя</returns>
+    IEnumerable<string> GetRoles();
+    
+    /// <summary>
     /// Проверяет, имеет ли пользователь доступ к указанной странице.
     /// </summary>
     /// <param name="pagePath">Путь к странице</param>

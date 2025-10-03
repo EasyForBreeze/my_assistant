@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Linq;
 using Microsoft.AspNetCore.Http;
 using new_assistant.Core.Interfaces;
 
@@ -19,13 +20,13 @@ public class UserRoleService : IUserRoleService
     public bool IsAdmin()
     {
         var user = _httpContextAccessor.HttpContext?.User;
-        return user?.IsInRole("Assistant-Admin") == true;
+        return user?.IsInRole("assistant-admin") == true;
     }
     
     public bool IsUser()
     {
         var user = _httpContextAccessor.HttpContext?.User;
-        return user?.IsInRole("Assistant-User") == true;
+        return user?.IsInRole("assistant-user") == true;
     }
     
     public string? GetUserRole()
@@ -34,11 +35,11 @@ public class UserRoleService : IUserRoleService
         if (user?.Identity?.IsAuthenticated != true)
             return null;
             
-        if (user.IsInRole("Assistant-Admin"))
-            return "Assistant-Admin";
+        if (user.IsInRole("assistant-admin"))
+            return "assistant-admin";
             
-        if (user.IsInRole("Assistant-User"))
-            return "Assistant-User";
+        if (user.IsInRole("assistant-user"))
+            return "assistant-user";
             
         return null;
     }
@@ -56,6 +57,15 @@ public class UserRoleService : IUserRoleService
                user?.FindFirst("sub")?.Value;
     }
     
+    public IEnumerable<string> GetRoles()
+    {
+        var user = _httpContextAccessor.HttpContext?.User;
+        if (user?.Identity?.IsAuthenticated != true)
+            return Enumerable.Empty<string>();
+            
+        return user.FindAll(ClaimTypes.Role).Select(c => c.Value);
+    }
+    
     public bool HasAccessToPage(string pagePath)
     {
         var role = GetUserRole();
@@ -65,8 +75,8 @@ public class UserRoleService : IUserRoleService
         // Определяем доступ к страницам в зависимости от роли
         return role switch
         {
-            "Assistant-Admin" => IsAdminPageAccessible(pagePath),
-            "Assistant-User" => IsUserPageAccessible(pagePath),
+            "assistant-admin" => IsAdminPageAccessible(pagePath),
+            "assistant-user" => IsUserPageAccessible(pagePath),
             _ => false
         };
     }

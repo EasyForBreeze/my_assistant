@@ -16,7 +16,26 @@
         Navigation.NavigateTo("/api/auth/login", forceLoad: true);
         return;
     }
+    
+    // Отладочная информация
+    var userId = UserRoleService.GetUserId();
+    var userName = UserRoleService.GetUserName();
+    var roles = UserRoleService.GetRoles();
+    var isUser = UserRoleService.IsUser();
+    var isAdmin = UserRoleService.IsAdmin();
 }
+
+<!-- Отладочная информация -->
+<div class="card p-4 mb-4 bg-yellow-900/20 border border-yellow-500/30">
+    <h3 class="text-lg font-semibold text-yellow-400 mb-2">Отладочная информация</h3>
+    <div class="text-sm text-gray-300 space-y-1">
+        <p><strong>ID пользователя:</strong> @userId</p>
+        <p><strong>Имя пользователя:</strong> @userName</p>
+        <p><strong>Роли:</strong> @string.Join(", ", roles)</p>
+        <p><strong>IsUser:</strong> @isUser</p>
+        <p><strong>IsAdmin:</strong> @isAdmin</p>
+    </div>
+</div>
 
 @if (UserRoleService.IsUser())
 {
@@ -335,6 +354,30 @@ else if (UserRoleService.IsAdmin())
                     <p class="text-xs text-gray-400">3 часа назад</p>
                 </div>
             </div>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Если роль не определена, показываем общую информацию -->
+    <div class="mb-8 animate-stagger">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-4xl font-bold gradient-text mb-2">
+                    Добро пожаловать!
+                </h1>
+                <p class="text-gray-400 text-lg">Ваша роль не определена. Обратитесь к администратору.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card p-6">
+        <h3 class="text-xl font-semibold text-white mb-4">Информация о пользователе</h3>
+        <div class="text-gray-300 space-y-2">
+            <p><strong>ID:</strong> @userId</p>
+            <p><strong>Имя:</strong> @userName</p>
+            <p><strong>Роли:</strong> @string.Join(", ", roles)</p>
+            <p><strong>Статус авторизации:</strong> Авторизован</p>
         </div>
     </div>
 }
