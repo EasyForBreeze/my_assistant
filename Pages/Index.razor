@@ -31,11 +31,17 @@
                 <p class="text-gray-400 text-lg">Управление вашими Keycloak клиентами и доступом к ним.</p>
             </div>
             <div class="flex space-x-4">
-                <button class="create-client-btn">
-                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    <span class="text">Создать клиента</span>
+                <button
+                    class="group relative inline-flex items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 p-[1px] shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-purple-500/60 focus:ring-offset-2 focus:ring-offset-slate-900">
+                    <span class="inline-flex items-center gap-3 rounded-2xl bg-slate-900/90 px-6 py-3 text-lg font-semibold text-white transition-colors duration-300 group-hover:bg-transparent">
+                        <span
+                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 text-blue-300 transition-transform duration-300 group-hover:scale-105">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                        </span>
+                        <span>Создать клиента</span>
+                    </span>
                 </button>
             </div>
         </div>
