@@ -52,87 +52,92 @@
 </div>
 
 <!-- Search Section - Clean Minimalist Style -->
-<div class="mb-8">
-    <!-- Search Container -->
-    <div class="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-r from-purple-500/50 via-sky-500/40 to-fuchsia-500/50 shadow-[0_0_35px_-15px_rgba(168,85,247,0.8)]">
-        <div class="absolute -top-24 -right-16 w-64 h-64 bg-purple-500/30 rounded-full blur-3xl opacity-70 pointer-events-none"></div>
-        <div class="absolute -bottom-32 -left-12 w-72 h-72 bg-sky-500/20 rounded-full blur-3xl opacity-70 pointer-events-none"></div>
-        <div class="relative bg-gray-900/80 backdrop-blur-xl rounded-[1.4rem] p-6 border border-white/5">
-        <!-- Header -->
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-blue-500/40 to-purple-500/40 border border-white/10 rounded-xl flex items-center justify-center shadow-[0_8px_20px_-12px_rgba(56,189,248,1)]">
-                    <svg class="w-5 h-5 text-sky-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-white tracking-wide">Поиск клиентов</h3>
-                    <p class="text-sm text-slate-300/80">По всем реалмам Keycloak</p>
-                </div>
-            </div>
-            @if (!string.IsNullOrEmpty(searchQuery))
-            {
-                <button @onclick="ClearSearch"
-                        class="px-3 py-1.5 text-sm bg-gradient-to-r from-rose-500/30 to-orange-500/30 hover:from-rose-500/40 hover:to-orange-500/40 text-rose-200 rounded-lg transition-all duration-200 flex items-center space-x-2 border border-white/10">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                    <span>Очистить</span>
-                </button>
-            }
-        </div>
+<div class="mb-10">
+    <div class="relative overflow-hidden rounded-3xl border border-slate-700/80 bg-slate-900/85 shadow-[0_24px_72px_-35px_rgba(56,189,248,0.55)]">
+        <div class="absolute inset-0 opacity-70 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.22),_transparent_55%)]"></div>
+        <div class="absolute -left-24 -bottom-32 w-64 h-64 bg-indigo-500/20 blur-3xl"></div>
+        <div class="absolute -right-16 -top-28 w-56 h-56 bg-cyan-500/10 blur-3xl"></div>
 
-        <!-- Search Input -->
-        <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-5 w-5 text-slate-300/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-            </div>
-            <input type="text"
-                   @bind="searchQuery"
-                   @onkeypress="@(async (e) => { if (e.Key == "Enter") await SearchClients(); })"
-                   placeholder="Введите название клиента, реалм или тип..."
-                   class="w-full pl-12 pr-36 py-3.5 bg-gradient-to-r from-slate-900/70 via-slate-900/40 to-slate-900/70 border border-transparent rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-500/30 focus:border-purple-400/70 transition-all duration-300 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.25),0_12px_25px_-20px_rgba(99,102,241,1)]">
-            <div class="absolute inset-y-0 right-3 flex items-center space-x-2">
-                @if (!string.IsNullOrWhiteSpace(searchQuery))
-                {
-                    <div class="hidden sm:flex items-center text-xs text-slate-200/80 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 shadow-[0_5px_15px_-12px_rgba(148,163,184,0.8)]">Enter ↵</div>
-                }
-                <button type="button"
-                        class="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 hover:from-blue-400 hover:via-indigo-400 hover:to-purple-400 text-white text-sm font-semibold transition-all duration-200 shadow-[0_10px_25px_-15px_rgba(99,102,241,1)]"
-                        @onclick="SearchClients">
-                    Найти
-                </button>
-            </div>
-        </div>
+        <div class="relative p-8 lg:p-10 space-y-6">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+                <div class="space-y-2 max-w-2xl">
+                    <div class="inline-flex items-center px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/80 text-xs text-slate-300 uppercase tracking-[0.2em]">Client search</div>
+                    <h2 class="text-3xl lg:text-4xl font-semibold text-white">Найдите клиента в пару кликов</h2>
+                    <p class="text-base text-slate-300/90 leading-relaxed">Поиск работает по всем реалмам Keycloak, поддерживает частичное совпадение и мгновенно показывает активность клиента.</p>
+                </div>
 
-        <!-- Quick Search Tags -->
-        <div class="mt-4">
-            <p class="text-sm text-slate-300/70 mb-3 uppercase tracking-[0.18em]">Популярные запросы</p>
-            <div class="flex flex-wrap gap-2.5">
-                @foreach (var suggestion in quickSuggestions)
+                @if (!string.IsNullOrEmpty(searchQuery))
                 {
-                    <button @onclick="@(async () => { searchQuery = suggestion.Query; await SearchClients(); })"
-                            class=@($"group px-3.5 py-1.5 text-xs rounded-xl transition-all duration-300 border border-white/10 bg-white/5 hover:bg-white/10 flex items-center space-x-1.5 text-slate-200/90 shadow-[0_10px_30px_-18px_rgba(79,70,229,0.7)] {suggestion.ClassName}")>
-                        <span>@suggestion.Icon</span>
-                        <span class="transition-transform duration-300 group-hover:translate-x-0.5">@suggestion.Label</span>
+                    <button @onclick="ClearSearch"
+                            class="self-start inline-flex items-center gap-2 rounded-xl border border-slate-600/70 bg-slate-800/70 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:border-slate-500 hover:bg-slate-700/70">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        Очистить поиск
                     </button>
                 }
             </div>
-        </div>
 
-        <!-- Active Search Indicator -->
-        @if (!string.IsNullOrEmpty(searchQuery))
-        {
-            <div class="mt-5 p-3.5 bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-blue-500/20 rounded-xl shadow-[0_12px_30px_-20px_rgba(99,102,241,0.8)]">
-                <div class="flex items-center space-x-3">
-                    <div class="w-2.5 h-2.5 bg-gradient-to-r from-blue-400 via-cyan-300 to-purple-400 rounded-full animate-pulse shadow-[0_0_12px_rgba(59,130,246,0.9)]"></div>
-                    <span class="text-sm text-blue-200">Поиск: <span class="font-medium text-slate-50">"@searchQuery"</span></span>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800/80 border border-slate-700/70 text-slate-300">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </span>
+                </div>
+
+                <input type="text"
+                       @bind="searchQuery"
+                       @onkeypress="@(async (e) => { if (e.Key == "Enter") await SearchClients(); })"
+                       placeholder="Введите название клиента, реалм или тип..."
+                       class="w-full rounded-3xl border border-slate-700/70 bg-slate-900/90 pl-20 pr-36 py-4 text-base text-slate-100 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-4 focus:ring-sky-500/20 transition-all duration-200" />
+
+                <div class="absolute inset-y-0 right-3 flex items-center gap-2">
+                    @if (!string.IsNullOrWhiteSpace(searchQuery))
+                    {
+                        <span class="hidden sm:flex items-center rounded-xl border border-slate-600/70 bg-slate-800/80 px-3 py-1 text-xs text-slate-300">Enter ↵</span>
+                    }
+                    <button type="button"
+                            class="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-500 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_18px_40px_-25px_rgba(56,189,248,0.9)] transition-all duration-200 hover:from-sky-400 hover:via-indigo-400 hover:to-purple-400"
+                            @onclick="SearchClients">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                        </svg>
+                        Найти
+                    </button>
                 </div>
             </div>
-        }
+
+            <div class="space-y-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Популярные запросы</p>
+                    <div class="hidden h-0.5 flex-1 rounded-full bg-slate-700/60 md:block"></div>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    @foreach (var suggestion in quickSuggestions)
+                    {
+                        <button @onclick="@(async () => { searchQuery = suggestion.Query; await SearchClients(); })"
+                                class=@($"group inline-flex items-center gap-2 rounded-2xl border border-slate-700/70 bg-slate-800/80 px-3.5 py-2 text-xs font-medium text-slate-200 transition-colors hover:border-sky-400/60 hover:bg-slate-800/95 {suggestion.ClassName}")>
+                            <span class="text-base">@suggestion.Icon</span>
+                            <span class="transition-transform duration-200 group-hover:translate-x-0.5">@suggestion.Label</span>
+                        </button>
+                    }
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(searchQuery))
+            {
+                <div class="rounded-2xl border border-sky-500/30 bg-sky-500/10 px-5 py-3 text-sm text-sky-100 shadow-[0_18px_45px_-32px_rgba(56,189,248,0.85)]">
+                    <div class="flex items-center gap-3">
+                        <span class="relative inline-flex h-2.5 w-2.5">
+                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400/70"></span>
+                            <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-300"></span>
+                        </span>
+                        <span>Ищем по запросу <span class="font-semibold text-white">"@searchQuery"</span></span>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -434,10 +439,10 @@ else
 
     private readonly List<ClientSearchSuggestion> quickSuggestions = new()
     {
-        new("app", "Веб-приложения", "bg-blue-500/10 hover:bg-blue-500/20 text-blue-200 border-blue-500/20", "💻"),
-        new("test", "Тестовые", "bg-green-500/10 hover:bg-green-500/20 text-green-200 border-green-500/20", "🧪"),
-        new("mobile", "Мобильные", "bg-purple-500/10 hover:bg-purple-500/20 text-purple-200 border-purple-500/20", "📱"),
-        new("api", "API сервисы", "bg-orange-500/10 hover:bg-orange-500/20 text-orange-200 border-orange-500/20", "🔗")
+        new("app", "Веб-приложения", "border-sky-500/40 text-sky-200 hover:bg-sky-500/10", "💻"),
+        new("test", "Тестовые", "border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10", "🧪"),
+        new("mobile", "Мобильные", "border-violet-500/40 text-violet-200 hover:bg-violet-500/10", "📱"),
+        new("api", "API сервисы", "border-amber-500/40 text-amber-200 hover:bg-amber-500/10", "🔗")
     };
 
     private readonly List<ClientSearchResult> allClients = new();
