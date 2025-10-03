@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+@source "../Pages/**/*.razor";
+@source "../Shared/**/*.razor";
+@source "../App.razor";
+@source "../_Imports.razor";
+
 /* Кастомная тема для Tailwind v4 */
 @theme {
   --color-primary-50: #eff6ff;
@@ -621,4 +626,644 @@ html, body {
 
 ::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-gray-500);
+}
+
+/* Дополнительные классы для кнопки */
+.px-6 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.bg-gradient-to-r {
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+
+.from-blue-500 {
+  --tw-gradient-from: #3b82f6;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(59, 130, 246, 0));
+}
+
+.via-purple-500 {
+  --tw-gradient-to: rgba(168, 85, 247, 0);
+  --tw-gradient-stops: var(--tw-gradient-from), #a855f7, var(--tw-gradient-to);
+}
+
+.to-blue-600 {
+  --tw-gradient-to: #2563eb;
+}
+
+.hover\:from-blue-600:hover {
+  --tw-gradient-from: #2563eb;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(37, 99, 235, 0));
+}
+
+.hover\:via-purple-600:hover {
+  --tw-gradient-to: rgba(147, 51, 234, 0);
+  --tw-gradient-stops: var(--tw-gradient-from), #9333ea, var(--tw-gradient-to);
+}
+
+.hover\:to-blue-700:hover {
+  --tw-gradient-to: #1d4ed8;
+}
+
+.from-blue-400 {
+  --tw-gradient-from: #60a5fa;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(96, 165, 250, 0));
+}
+
+.via-purple-400 {
+  --tw-gradient-to: rgba(196, 181, 253, 0);
+  --tw-gradient-stops: var(--tw-gradient-from), #c4b5fd, var(--tw-gradient-to);
+}
+
+.to-blue-500 {
+  --tw-gradient-to: #3b82f6;
+}
+
+.rounded-xl {
+  border-radius: 0.75rem;
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.hover\:shadow-xl:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.transform {
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+.hover\:scale-105:hover {
+  --tw-scale-x: 1.05;
+  --tw-scale-y: 1.05;
+}
+
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.duration-300 {
+  transition-duration: 300ms;
+}
+
+.ease-out {
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.opacity-0 {
+  opacity: 0;
+}
+
+.group-hover\:opacity-100:hover {
+  opacity: 1;
+}
+
+.transition-opacity {
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.group-hover\:rotate-12:hover {
+  --tw-rotate: 12deg;
+}
+
+.duration-300 {
+  transition-duration: 300ms;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+/* Дополнительные стили для кнопки */
+.px-6 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.flex {
+  display: flex;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.space-x-2 > * + * {
+  margin-left: 0.5rem;
+}
+
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+}
+
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.duration-300 {
+  transition-duration: 300ms;
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.hover\:shadow-xl:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.relative {
+  position: relative;
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.group:hover .group-hover\:rotate-90 {
+  transform: rotate(90deg);
+}
+
+.group-hover\:rotate-90 {
+  transition: transform 300ms;
+}
+
+.group-hover\:translate-x-20:hover {
+  transform: translateX(5rem);
+}
+
+.group-hover\:translate-y-20:hover {
+  transform: translateY(5rem);
+}
+
+.transition-transform {
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.duration-500 {
+  transition-duration: 500ms;
+}
+
+.ease-out {
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+
+.-top-1 {
+  top: -0.25rem;
+}
+
+.-left-1 {
+  left: -0.25rem;
+}
+
+.w-6 {
+  width: 1.5rem;
+}
+
+.h-6 {
+  height: 1.5rem;
+}
+
+.bg-white {
+  background-color: white;
+}
+
+.opacity-20 {
+  opacity: 0.2;
+}
+
+.rounded-full {
+  border-radius: 9999px;
+}
+
+.transform {
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+.rotate-45 {
+  --tw-rotate: 45deg;
+}
+
+.w-5 {
+  width: 1.25rem;
+}
+
+.h-5 {
+  height: 1.25rem;
+}
+
+/* Продвинутые стили для кнопки создания клиента */
+.create-client-btn {
+  position: relative;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+.create-client-btn:hover {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.px-8 {
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+.py-4 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.rounded-2xl {
+  border-radius: 1rem;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.bg-gradient-to-r {
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+
+.from-blue-500 {
+  --tw-gradient-from: #3b82f6;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(59, 130, 246, 0));
+}
+
+.via-purple-500 {
+  --tw-gradient-to: rgba(168, 85, 247, 0);
+  --tw-gradient-stops: var(--tw-gradient-from), #a855f7, var(--tw-gradient-to);
+}
+
+.to-pink-500 {
+  --tw-gradient-to: #ec4899;
+}
+
+.from-blue-400 {
+  --tw-gradient-from: #60a5fa;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(96, 165, 250, 0));
+}
+
+.via-purple-400 {
+  --tw-gradient-to: rgba(196, 181, 253, 0);
+  --tw-gradient-stops: var(--tw-gradient-from), #c4b5fd, var(--tw-gradient-to);
+}
+
+.to-pink-400 {
+  --tw-gradient-to: #f472b6;
+}
+
+.opacity-90 {
+  opacity: 0.9;
+}
+
+.group-hover\:opacity-100:hover {
+  opacity: 1;
+}
+
+.group-hover\:opacity-100:hover {
+  opacity: 1;
+}
+
+.transition-opacity {
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.duration-500 {
+  transition-duration: 500ms;
+}
+
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+}
+
+.bg-black\/20 {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.bg-black\/10 {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.group-hover\:bg-black\/10:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.z-10 {
+  z-index: 10;
+}
+
+.space-x-3 > * + * {
+  margin-left: 0.75rem;
+}
+
+.w-6 {
+  width: 1.5rem;
+}
+
+.h-6 {
+  height: 1.5rem;
+}
+
+.group-hover\:rotate-180:hover {
+  transform: rotate(180deg);
+}
+
+.transition-transform {
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.duration-700 {
+  transition-duration: 700ms;
+}
+
+.ease-out {
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+
+.stroke-width-2\.5 {
+  stroke-width: 2.5;
+}
+
+.bg-white\/30 {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.blur-sm {
+  filter: blur(4px);
+}
+
+.group-hover\:opacity-100:hover {
+  opacity: 1;
+}
+
+.from-white {
+  --tw-gradient-from: #ffffff;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(255, 255, 255, 0));
+}
+
+.to-blue-100 {
+  --tw-gradient-to: #dbeafe;
+}
+
+.bg-clip-text {
+  background-clip: text;
+}
+
+.text-transparent {
+  color: transparent;
+}
+
+.group-hover\:from-blue-100:hover {
+  --tw-gradient-from: #dbeafe;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(219, 234, 254, 0));
+}
+
+.group-hover\:to-white:hover {
+  --tw-gradient-to: #ffffff;
+}
+
+.-top-2 {
+  top: -0.5rem;
+}
+
+.-left-2 {
+  left: -0.5rem;
+}
+
+.w-8 {
+  width: 2rem;
+}
+
+.h-8 {
+  height: 2rem;
+}
+
+.bg-white\/20 {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.rotate-45 {
+  --tw-rotate: 45deg;
+}
+
+.group-hover\:translate-x-32:hover {
+  transform: translateX(8rem);
+}
+
+.group-hover\:translate-y-32:hover {
+  transform: translateY(8rem);
+}
+
+.duration-1000 {
+  transition-duration: 1000ms;
+}
+
+.-bottom-1 {
+  bottom: -0.25rem;
+}
+
+.-right-1 {
+  right: -0.25rem;
+}
+
+.bg-purple-300\/30 {
+  background-color: rgba(196, 181, 253, 0.3);
+}
+
+.rotate-12 {
+  --tw-rotate: 12deg;
+}
+
+.group-hover\:translate-x-24:hover {
+  transform: translateX(6rem);
+}
+
+.group-hover\:-translate-y-24:hover {
+  transform: translateY(-6rem);
+}
+
+.duration-800 {
+  transition-duration: 800ms;
+}
+
+.delay-100 {
+  transition-delay: 100ms;
+}
+
+.top-1\/2 {
+  top: 50%;
+}
+
+.left-1\/4 {
+  left: 25%;
+}
+
+.w-4 {
+  width: 1rem;
+}
+
+.h-4 {
+  height: 1rem;
+}
+
+.bg-pink-300\/25 {
+  background-color: rgba(252, 165, 165, 0.25);
+}
+
+.group-hover\:translate-x-20:hover {
+  transform: translateX(5rem);
+}
+
+.group-hover\:-translate-y-16:hover {
+  transform: translateY(-4rem);
+}
+
+.duration-900 {
+  transition-duration: 900ms;
+}
+
+.delay-200 {
+  transition-delay: 200ms;
+}
+
+.border-white\/20 {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.group-hover\:border-white\/40:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.border-transparent {
+  border-color: transparent;
+}
+
+.from-blue-400\/50 {
+  --tw-gradient-from: rgba(96, 165, 250, 0.5);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(96, 165, 250, 0));
+}
+
+.via-purple-400\/50 {
+  --tw-gradient-to: rgba(196, 181, 253, 0);
+  --tw-gradient-stops: var(--tw-gradient-from), rgba(196, 181, 253, 0.5), var(--tw-gradient-to);
+}
+
+.to-pink-400\/50 {
+  --tw-gradient-to: rgba(244, 114, 182, 0.5);
+}
+
+.group-hover\:from-blue-300\/70:hover {
+  --tw-gradient-from: rgba(147, 51, 234, 0.7);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(147, 51, 234, 0));
+}
+
+.group-hover\:via-purple-300\/70:hover {
+  --tw-gradient-to: rgba(196, 181, 253, 0);
+  --tw-gradient-stops: var(--tw-gradient-from), rgba(196, 181, 253, 0.7), var(--tw-gradient-to);
+}
+
+.group-hover\:to-pink-300\/70:hover {
+  --tw-gradient-to: rgba(252, 165, 165, 0.7);
+}
+
+.hover\:shadow-2xl:hover {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Простая кнопка создания клиента */
+.create-client-btn {
+  background: var(--color-primary-600);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.create-client-btn:hover {
+  background: var(--color-primary-700);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.create-client-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+}
+
+.create-client-btn .icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  transition: transform 0.2s ease;
+}
+
+.create-client-btn:hover .icon {
+  transform: scale(1.1);
+}
+
+.create-client-btn .text {
+  font-weight: 600;
 }
