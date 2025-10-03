@@ -126,7 +126,7 @@ builder.Services.AddServerSideBlazor();
 // Настраиваем глобальную политику обработки cookies: требуем secure-канал и запрещаем доступ из JS.
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
-    options.MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+    options.MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.Unspecified;
     options.HttpOnly = HttpOnlyPolicy.Always;
     options.Secure = CookieSecurePolicy.Always;
 });
