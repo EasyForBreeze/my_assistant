@@ -1,7 +1,6 @@
 @page "/admin/clients"
 @using new_assistant.Core.Interfaces
 @using Microsoft.AspNetCore.Authorization
-@using System.Linq
 @inject IUserRoleService UserRoleService
 @inject NavigationManager Navigation
 @inject IHttpContextAccessor HttpContextAccessor
@@ -10,14 +9,14 @@
 
 @{
     var isAuthenticated = HttpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true;
-
+    
     if (!isAuthenticated)
     {
         // Если пользователь не авторизован, перенаправляем на авторизацию через Keycloak
         Navigation.NavigateTo("/api/auth/login", forceLoad: true);
         return;
     }
-
+    
     if (!UserRoleService.IsAdmin())
     {
         // Если пользователь не администратор, перенаправляем на главную страницу
@@ -27,16 +26,16 @@
 }
 
 <!-- Hero Section -->
-<div class="mb-8 animate-stagger">
+<div id="admin-hero-section" class="mb-8 animate-stagger">
     <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-4xl font-bold gradient-text mb-2">
+        <div id="admin-hero-content">
+            <h1 id="admin-page-title" class="text-4xl font-bold gradient-text mb-2">
                 Управление клиентами
             </h1>
-            <p class="text-gray-400 text-lg">Поиск и управление всеми Keycloak клиентами во всех реалмах.</p>
+            <p id="admin-page-description" class="text-gray-400 text-lg">Поиск и управление всеми Keycloak клиентами во всех реалмах.</p>
         </div>
         <div class="flex justify-end">
-            <button class="create-client-btn">
+            <button id="admin-create-button" class="create-client-btn">
                 <div class="btn-content">
                     <div class="btn-icon">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,241 +51,138 @@
 </div>
 
 <!-- Search Section - Clean Minimalist Style -->
-<div class="mb-10">
-    <div class="relative overflow-hidden rounded-3xl border border-slate-700/80 bg-slate-900/85 shadow-[0_24px_72px_-35px_rgba(56,189,248,0.55)]">
-        <div class="absolute inset-0 opacity-70 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.22),_transparent_55%)]"></div>
-        <div class="absolute -left-24 -bottom-32 w-64 h-64 bg-indigo-500/20 blur-3xl"></div>
-        <div class="absolute -right-16 -top-28 w-56 h-56 bg-cyan-500/10 blur-3xl"></div>
-
-        <div class="relative p-8 lg:p-10 space-y-6">
-            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-                <div class="space-y-2 max-w-2xl">
-                    <div class="inline-flex items-center px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/80 text-xs text-slate-300 uppercase tracking-[0.2em]">Client search</div>
-                    <h2 class="text-3xl lg:text-4xl font-semibold text-white">Найдите клиента в пару кликов</h2>
-                    <p class="text-base text-slate-300/90 leading-relaxed">Поиск работает по всем реалмам Keycloak, поддерживает частичное совпадение и мгновенно показывает активность клиента.</p>
+<div id="admin-search-section" class="mb-8">
+    <!-- Search Container -->
+    <div id="admin-search-container" class="bg-gray-800/30 rounded-xl p-6 border border-gray-700/50 backdrop-blur-sm">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
                 </div>
-
-                @if (!string.IsNullOrEmpty(searchQuery))
-                {
-                    <button @onclick="ClearSearch"
-                            class="self-start inline-flex items-center gap-2 rounded-xl border border-slate-600/70 bg-slate-800/70 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:border-slate-500 hover:bg-slate-700/70">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                        Очистить поиск
-                    </button>
-                }
-            </div>
-
-            <div class="relative">
-                <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800/80 border border-slate-700/70 text-slate-300">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                    </span>
-                </div>
-
-                <input type="text"
-                       @bind="searchQuery"
-                       @onkeypress="@(async (e) => { if (e.Key == "Enter") await SearchClients(); })"
-                       placeholder="Введите название клиента, реалм или тип..."
-                       class="w-full rounded-3xl border border-slate-700/70 bg-slate-900/90 pl-20 pr-36 py-4 text-base text-slate-100 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-4 focus:ring-sky-500/20 transition-all duration-200" />
-
-                <div class="absolute inset-y-0 right-3 flex items-center gap-2">
-                    @if (!string.IsNullOrWhiteSpace(searchQuery))
-                    {
-                        <span class="hidden sm:flex items-center rounded-xl border border-slate-600/70 bg-slate-800/80 px-3 py-1 text-xs text-slate-300">Enter ↵</span>
-                    }
-                    <button type="button"
-                            class="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-500 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_18px_40px_-25px_rgba(56,189,248,0.9)] transition-all duration-200 hover:from-sky-400 hover:via-indigo-400 hover:to-purple-400"
-                            @onclick="SearchClients">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                        </svg>
-                        Найти
-                    </button>
+                <div>
+                    <h3 class="text-lg font-semibold text-white">Поиск клиентов</h3>
+                    <p class="text-sm text-gray-400">По всем реалмам Keycloak</p>
                 </div>
             </div>
-
-            <div class="space-y-4">
-                <div class="flex flex-wrap items-center gap-3">
-                    <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Популярные запросы</p>
-                    <div class="hidden h-0.5 flex-1 rounded-full bg-slate-700/60 md:block"></div>
-                </div>
-                <div class="flex flex-wrap gap-3">
-                    @foreach (var suggestion in quickSuggestions)
-                    {
-                        <button @onclick="@(async () => { searchQuery = suggestion.Query; await SearchClients(); })"
-                                class=@($"group inline-flex items-center gap-2 rounded-2xl border border-slate-700/70 bg-slate-800/80 px-3.5 py-2 text-xs font-medium text-slate-200 transition-colors hover:border-sky-400/60 hover:bg-slate-800/95 {suggestion.ClassName}")>
-                            <span class="text-base">@suggestion.Icon</span>
-                            <span class="transition-transform duration-200 group-hover:translate-x-0.5">@suggestion.Label</span>
-                        </button>
-                    }
-                </div>
-            </div>
-
             @if (!string.IsNullOrEmpty(searchQuery))
             {
-                <div class="rounded-2xl border border-sky-500/30 bg-sky-500/10 px-5 py-3 text-sm text-sky-100 shadow-[0_18px_45px_-32px_rgba(56,189,248,0.85)]">
-                    <div class="flex items-center gap-3">
-                        <span class="relative inline-flex h-2.5 w-2.5">
-                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400/70"></span>
-                            <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-300"></span>
-                        </span>
-                        <span>Ищем по запросу <span class="font-semibold text-white">"@searchQuery"</span></span>
-                    </div>
-                </div>
+                <button @onclick="ClearSearch" 
+                        class="px-3 py-1.5 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 rounded-lg transition-all duration-200 flex items-center space-x-2">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    <span>Очистить</span>
+                </button>
             }
         </div>
+        
+        <!-- Search Input -->
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            <input type="text" 
+                   @bind="searchQuery" 
+                   @onkeypress="@(async (e) => { if (e.Key == "Enter") await SearchClients(); })"
+                   placeholder="Введите название клиента..."
+                   class="w-full pl-10 pr-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200">
+        </div>
+        
+        
+        <!-- Active Search Indicator -->
+        @if (!string.IsNullOrEmpty(searchQuery))
+        {
+            <div class="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <div class="flex items-center space-x-2">
+                    <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
+                    <span class="text-sm text-blue-300">Поиск: <span class="font-medium text-blue-200">"@searchQuery"</span></span>
+                </div>
+            </div>
+        }
     </div>
 </div>
 
-<!-- Stats Section -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <!-- Всего клиентов -->
-    <div class="card stat-card-blue p-6 flex items-center space-x-4 animate-stagger">
-        <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 text-xl">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-            </svg>
-        </div>
-        <div>
-            <p class="text-2xl font-bold text-white">@totalClients</p>
-            <p class="text-sm text-blue-300">Всего клиентов</p>
-        </div>
-    </div>
-
-    <!-- Активные -->
-    <div class="card stat-card-green p-6 flex items-center space-x-4 animate-stagger">
-        <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center text-green-400 text-xl">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-        </div>
-        <div>
-            <p class="text-2xl font-bold text-white">@activeClients</p>
-            <p class="text-sm text-green-300">Активные</p>
-        </div>
-    </div>
-
-    <!-- По реалмам -->
-    <div class="card stat-card-purple p-6 flex items-center space-x-4 animate-stagger">
-        <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center text-purple-400 text-xl">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
-            </svg>
-        </div>
-        <div>
-            <p class="text-2xl font-bold text-white">@realmsCount</p>
-            <p class="text-sm text-purple-300">Реалмов</p>
-        </div>
-    </div>
-
-    <!-- Результаты поиска -->
-    <div class="card stat-card-orange p-6 flex items-center space-x-4 animate-stagger">
-        <div class="w-12 h-12 bg-orange-500/20 rounded-full flex items-center justify-center text-orange-400 text-xl">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-        </div>
-        <div>
-            <p class="text-2xl font-bold text-white">@searchResults</p>
-            <p class="text-sm text-orange-300">Найдено</p>
-        </div>
-    </div>
-</div>
 
 <!-- Search Results -->
 @if (isSearching)
 {
-    <div class="card p-6">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-            <div>
-                <h3 class="text-xl font-semibold text-white mb-1">Результаты поиска</h3>
-                <p class="text-sm text-gray-400">Найдено <span class="text-white font-semibold">@searchResults</span> клиентов. Время ответа: <span class="text-green-300">@lastSearchDuration</span></p>
-            </div>
-            <div class="flex flex-wrap gap-2">
-                <div class="px-3 py-1.5 rounded-lg bg-gray-800/50 border border-gray-700 text-sm text-gray-300 flex items-center space-x-2">
-                    <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span>Активных: @activeMatches</span>
-                </div>
-                <div class="px-3 py-1.5 rounded-lg bg-gray-800/50 border border-gray-700 text-sm text-gray-300 flex items-center space-x-2">
-                    <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"></path>
-                    </svg>
-                    <span>Реалмов: @matchedRealmCount</span>
-                </div>
-            </div>
+    <div class="card p-6" id="admin-search-results-section">
+        <div class="mb-6">
+            <h3 class="text-xl font-semibold text-white">Результаты поиска</h3>
         </div>
-
+        
         <!-- Table -->
-        <div class="overflow-hidden border border-gray-700/60 rounded-2xl">
+        <div class="overflow-x-auto">
             <table class="w-full">
                 <thead>
-                    <tr class="bg-gray-800/50 text-left text-gray-300 text-sm">
-                        <th class="py-3 px-6 font-medium">Название</th>
-                        <th class="py-3 px-6 font-medium">Реалм</th>
-                        <th class="py-3 px-6 font-medium">Тип</th>
-                        <th class="py-3 px-6 font-medium">Категория</th>
-                        <th class="py-3 px-6 font-medium">Статус</th>
-                        <th class="py-3 px-6 font-medium">Создан</th>
-                        <th class="py-3 px-6 font-medium">Действия</th>
+                    <tr class="border-b border-gray-700">
+                        <th class="text-left py-3 px-4 text-gray-300 font-medium">Название</th>
+                        <th class="text-left py-3 px-4 text-gray-300 font-medium">Реалм</th>
+                        <th class="text-left py-3 px-4 text-gray-300 font-medium">Тип</th>
+                        <th class="text-left py-3 px-4 text-gray-300 font-medium">Статус</th>
+                        <th class="text-left py-3 px-4 text-gray-300 font-medium">Создан</th>
+                        <th class="text-left py-3 px-4 text-gray-300 font-medium">Действия</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-800/70 bg-gray-900/20">
-                    @if (filteredClients.Any())
+                <tbody>
+                    @if (searchResults > 0)
                     {
-                        @foreach (var client in filteredClients)
-                        {
-                            <tr class="group hover:bg-gray-800/40 transition-colors">
-                                <td class="py-4 px-6">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg font-semibold" style="background: @client.BadgeBackground; color: @client.BadgeColor">
-                                            @client.BadgeText
-                                        </div>
-                                        <div>
-                                            <p class="text-white font-medium">@client.Name</p>
-                                            <p class="text-xs text-gray-400">@client.Description</p>
-                                        </div>
+                        <!-- Примеры результатов поиска -->
+                        <tr class="border-b border-gray-800 hover:bg-gray-800/30 transition-colors">
+                            <td class="py-4 px-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                        </svg>
                                     </div>
-                                </td>
-                                <td class="py-4 px-6">
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-200 border border-purple-500/20">
-                                        @client.Realm
-                                    </span>
-                                </td>
-                                <td class="py-4 px-6">
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-200 border border-blue-500/20">
-                                        @client.Type
-                                    </span>
-                                </td>
-                                <td class="py-4 px-6 text-sm text-gray-300">@client.Category</td>
-                                <td class="py-4 px-6">
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium @(client.IsActive ? "bg-green-500/10 text-green-200 border border-green-500/20" : "bg-red-500/10 text-red-200 border border-red-500/20")">
-                                        @(client.IsActive ? "Активен" : "Отключен")
-                                    </span>
-                                </td>
-                                <td class="py-4 px-6 text-sm text-gray-400">@client.CreatedAt.ToString("dd MMM yyyy")</td>
-                                <td class="py-4 px-6">
-                                    <div class="flex space-x-2">
-                                        <button class="px-3 py-1 text-xs rounded-lg bg-blue-500/10 text-blue-200 border border-blue-500/30 hover:bg-blue-500/20 transition">
-                                            Открыть
-                                        </button>
-                                        <button class="px-3 py-1 text-xs rounded-lg bg-gray-700/40 text-gray-200 border border-gray-600 hover:bg-gray-700/60 transition">
-                                            Настройки
-                                        </button>
+                                    <div>
+                                        <p class="text-white font-medium">my-app-client</p>
+                                        <p class="text-sm text-gray-400">Веб-приложение</p>
                                     </div>
-                                </td>
-                            </tr>
-                        }
+                                </div>
+                            </td>
+                            <td class="py-4 px-4">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-900/50 text-purple-300">
+                                    production
+                                </span>
+                            </td>
+                            <td class="py-4 px-4">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-900/50 text-blue-300">
+                                    Confidential
+                                </span>
+                            </td>
+                            <td class="py-4 px-4">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-900/50 text-green-300">
+                                    Активен
+                                </span>
+                            </td>
+                            <td class="py-4 px-4 text-gray-400">5 дней назад</td>
+                            <td class="py-4 px-4">
+                                <div class="flex space-x-3">
+                                    <button class="text-blue-400 hover:text-blue-300 p-2 rounded-md hover:bg-blue-400/10 transition-colors">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                    <button class="text-red-400 hover:text-red-300 p-2 rounded-md hover:bg-red-400/10 transition-colors">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     }
                     else if (!string.IsNullOrEmpty(searchQuery))
                     {
                         <tr>
-                            <td colspan="7" class="py-20 text-center">
+                            <td colspan="6" class="py-20 text-center">
                                 <div class="max-w-md mx-auto">
                                     <!-- No Results Icon -->
                                     <div class="relative mb-6">
@@ -301,16 +197,16 @@
                                             </svg>
                                         </div>
                                     </div>
-
+                                    
                                     <!-- Main Message -->
                                     <h3 class="text-2xl font-bold text-white mb-3">Ничего не найдено</h3>
                                     <p class="text-gray-400 mb-6">По запросу <span class="text-orange-400 font-semibold">"@searchQuery"</span> клиенты не найдены</p>
-
+                                    
                                     <!-- Suggestions -->
                                     <div class="bg-gray-800/30 rounded-xl p-5 border border-gray-700/50 mb-6">
                                         <h4 class="text-white font-semibold mb-3 flex items-center">
                                             <svg class="w-4 h-4 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
                                             </svg>
                                             Попробуйте изменить запрос
                                         </h4>
@@ -329,16 +225,16 @@
                                             </div>
                                         </div>
                                     </div>
-
+                                    
                                     <!-- Action Buttons -->
                                     <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                                        <button @onclick="ClearSearch"
+                                        <button @onclick="ClearSearch" 
                                                 class="px-6 py-3 bg-gray-700/50 hover:bg-gray-600/50 text-white font-medium rounded-xl transition-all duration-200 border border-gray-600 hover:border-gray-500">
                                             Очистить поиск
                                         </button>
-                                        <button @onclick="@(async () => { searchQuery = quickSuggestions.First().Query; await SearchClients(); })"
+                                        <button @onclick="@(async () => { searchQuery = "app"; await SearchClients(); })" 
                                                 class="px-6 py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 hover:text-blue-200 font-medium rounded-xl transition-all duration-200 border border-blue-500/30 hover:border-blue-500/50">
-                                            Попробовать "@quickSuggestions.First().Label"
+                                            Попробовать "app"
                                         </button>
                                     </div>
                                 </div>
@@ -361,16 +257,13 @@ else
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                 </svg>
             </div>
-            <!-- Floating Elements -->
-            <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
-            <div class="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-500 rounded-full animate-pulse" style="animation-delay: 0.5s;"></div>
         </div>
-
+        
         <!-- Main Content -->
         <div class="max-w-2xl mx-auto">
             <h2 class="text-3xl font-bold text-white mb-4">Найдите любой клиент</h2>
             <p class="text-xl text-gray-400 mb-8">Поиск работает по всем реалмам Keycloak одновременно</p>
-
+            
             <!-- Feature Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div class="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
@@ -382,7 +275,7 @@ else
                     <h3 class="text-white font-semibold mb-2">Быстрый поиск</h3>
                     <p class="text-sm text-gray-400">Находит клиентов по частичному совпадению названия</p>
                 </div>
-
+                
                 <div class="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
                     <div class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center mb-3 mx-auto">
                         <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -392,7 +285,7 @@ else
                     <h3 class="text-white font-semibold mb-2">Все реалмы</h3>
                     <p class="text-sm text-gray-400">Ищет во всех реалмах кроме master</p>
                 </div>
-
+                
                 <div class="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
                     <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center mb-3 mx-auto">
                         <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -403,25 +296,7 @@ else
                     <p class="text-sm text-gray-400">Показывает реалм, тип и статус клиента</p>
                 </div>
             </div>
-
-            <!-- Quick Start -->
-            <div class="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl p-6 border border-blue-500/20">
-                <h3 class="text-lg font-semibold text-white mb-4">🚀 Попробуйте прямо сейчас</h3>
-                <div class="flex justify-center flex-wrap gap-3">
-                    <button @onclick="@(async () => { searchQuery = "app"; await SearchClients(); })"
-                            class="px-6 py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 hover:text-blue-200 rounded-xl transition-all duration-200 border border-blue-500/30 hover:border-blue-500/50 font-medium">
-                        Поиск "app"
-                    </button>
-                    <button @onclick="@(async () => { searchQuery = "test"; await SearchClients(); })"
-                            class="px-6 py-3 bg-green-500/20 hover:bg-green-500/30 text-green-300 hover:text-green-200 rounded-xl transition-all duration-200 border border-green-500/30 hover:border-green-500/50 font-medium">
-                        Поиск "test"
-                    </button>
-                    <button @onclick="@(async () => { searchQuery = "mobile"; await SearchClients(); })"
-                            class="px-6 py-3 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 hover:text-purple-200 rounded-xl transition-all duration-200 border border-purple-500/30 hover:border-purple-500/50 font-medium">
-                        Поиск "mobile"
-                    </button>
-                </div>
-            </div>
+            
         </div>
     </div>
 }
@@ -433,20 +308,6 @@ else
     private int activeClients = 0;
     private int realmsCount = 0;
     private int searchResults = 0;
-    private int activeMatches = 0;
-    private int matchedRealmCount = 0;
-    private string lastSearchDuration = "~";
-
-    private readonly List<ClientSearchSuggestion> quickSuggestions = new()
-    {
-        new("app", "Веб-приложения", "border-sky-500/40 text-sky-200 hover:bg-sky-500/10", "💻"),
-        new("test", "Тестовые", "border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10", "🧪"),
-        new("mobile", "Мобильные", "border-violet-500/40 text-violet-200 hover:bg-violet-500/10", "📱"),
-        new("api", "API сервисы", "border-amber-500/40 text-amber-200 hover:bg-amber-500/10", "🔗")
-    };
-
-    private readonly List<ClientSearchResult> allClients = new();
-    private List<ClientSearchResult> filteredClients = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -456,35 +317,17 @@ else
 
     private async Task SearchClients()
     {
-        var query = searchQuery.Trim();
-
-        if (string.IsNullOrWhiteSpace(query))
-        {
-            await ClearSearch();
+        if (string.IsNullOrWhiteSpace(searchQuery))
             return;
-        }
-
-        var watch = System.Diagnostics.Stopwatch.StartNew();
 
         isSearching = true;
-
-        await Task.Delay(150); // Имитация задержки API
-
-        filteredClients = allClients
-            .Where(client => client.Matches(query))
-            .OrderByDescending(client => client.IsActive)
-            .ThenBy(client => client.Name)
-            .ToList();
-
-        searchResults = filteredClients.Count;
-        activeMatches = filteredClients.Count(client => client.IsActive);
-        matchedRealmCount = filteredClients.Select(client => client.Realm).Distinct(StringComparer.OrdinalIgnoreCase).Count();
-
-        watch.Stop();
-        lastSearchDuration = watch.ElapsedMilliseconds < 1
-            ? "<1 мс"
-            : $"{watch.ElapsedMilliseconds} мс";
-
+        
+        // Здесь будет логика поиска клиентов через Keycloak API
+        // Пока что симулируем результаты
+        await Task.Delay(500); // Имитация задержки API
+        
+        searchResults = searchQuery.ToLower().Contains("app") ? 3 : 0;
+        
         StateHasChanged();
     }
 
@@ -493,10 +336,6 @@ else
         searchQuery = string.Empty;
         isSearching = false;
         searchResults = 0;
-        activeMatches = 0;
-        matchedRealmCount = 0;
-        lastSearchDuration = "~";
-        filteredClients = new List<ClientSearchResult>();
         StateHasChanged();
         return Task.CompletedTask;
     }
@@ -505,49 +344,9 @@ else
     {
         // Здесь будет загрузка статистики через Keycloak API
         // Пока что используем тестовые данные
-        allClients.Clear();
-        allClients.AddRange(new[]
-        {
-            new ClientSearchResult("my-app-client", "production", "Confidential", true, DateTime.UtcNow.AddDays(-5), "Веб-приложение команды Growth", "Веб-приложение", "linear-gradient(135deg, rgba(59,130,246,0.25), rgba(96,165,250,0.25))", "#60a5fa", "MA"),
-            new ClientSearchResult("marketing-landing", "marketing", "Public", true, DateTime.UtcNow.AddDays(-19), "Публичный лендинг для маркетинга", "Маркетинг", "linear-gradient(135deg, rgba(96,165,250,0.25), rgba(167,139,250,0.25))", "#a855f7", "ML"),
-            new ClientSearchResult("mobile-app", "mobile", "Confidential", true, DateTime.UtcNow.AddDays(-37), "Мобильное приложение iOS/Android", "Мобильное", "linear-gradient(135deg, rgba(129,140,248,0.25), rgba(14,165,233,0.25))", "#818cf8", "MO"),
-            new ClientSearchResult("analytics-api", "analytics", "Bearer-only", false, DateTime.UtcNow.AddDays(-120), "Сервис аналитики", "API", "linear-gradient(135deg, rgba(251,191,36,0.25), rgba(245,158,11,0.25))", "#fbbf24", "AN"),
-            new ClientSearchResult("payments-service", "finance", "Confidential", true, DateTime.UtcNow.AddDays(-60), "Платёжный сервис", "Финансы", "linear-gradient(135deg, rgba(34,197,94,0.25), rgba(22,163,74,0.25))", "#4ade80", "PS"),
-            new ClientSearchResult("test-client", "sandbox", "Public", true, DateTime.UtcNow.AddDays(-2), "Тестовый клиент для QA", "Тестирование", "linear-gradient(135deg, rgba(248,113,113,0.25), rgba(244,114,182,0.25))", "#f472b6", "TC"),
-            new ClientSearchResult("legacy-portal", "legacy", "Confidential", false, DateTime.UtcNow.AddDays(-320), "Старый портал", "Порталы", "linear-gradient(135deg, rgba(148,163,184,0.25), rgba(148,163,184,0.2))", "#cbd5f5", "LP"),
-            new ClientSearchResult("support-chatbot", "support", "Public", true, DateTime.UtcNow.AddDays(-12), "Чат-бот поддержки", "Поддержка", "linear-gradient(135deg, rgba(129,199,212,0.25), rgba(56,189,248,0.25))", "#38bdf8", "SC")
-        });
-
-        filteredClients = new List<ClientSearchResult>();
-
-        totalClients = allClients.Count;
-        activeClients = allClients.Count(client => client.IsActive);
-        realmsCount = allClients.Select(client => client.Realm).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+        totalClients = 47;
+        activeClients = 42;
+        realmsCount = 8;
         return Task.CompletedTask;
-    }
-
-    private sealed record ClientSearchSuggestion(string Query, string Label, string ClassName, string Icon);
-
-    private sealed record ClientSearchResult(
-        string Name,
-        string Realm,
-        string Type,
-        bool IsActive,
-        DateTime CreatedAt,
-        string Description,
-        string Category,
-        string BadgeBackground,
-        string BadgeColor,
-        string BadgeText)
-    {
-        public bool Matches(string query)
-        {
-            query = query.ToLowerInvariant();
-            return Name.ToLowerInvariant().Contains(query)
-                || Realm.ToLowerInvariant().Contains(query)
-                || Type.ToLowerInvariant().Contains(query)
-                || Description.ToLowerInvariant().Contains(query)
-                || Category.ToLowerInvariant().Contains(query);
-        }
     }
 }

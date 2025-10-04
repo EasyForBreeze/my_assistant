@@ -1,0 +1,6 @@
+@echo off
+echo Quick restart with CSS compilation...
+call "C:\Users\bream\source\repos\rab\new_assistant\tailwindcss.exe" --input wwwroot/css/input.css --output wwwroot/css/tailwind.css --minify
+echo CSS compiled successfully.
+echo Starting server...
+dotnet run
