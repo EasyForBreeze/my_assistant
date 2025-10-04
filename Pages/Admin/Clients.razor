@@ -1,7 +1,10 @@
 @page "/admin/clients"
 @using new_assistant.Core.Interfaces
+@using new_assistant.Core.DTOs
 @using Microsoft.AspNetCore.Authorization
+@using System.Linq
 @inject IUserRoleService UserRoleService
+@inject IKeycloakAdminService KeycloakAdminService
 @inject NavigationManager Navigation
 @inject IHttpContextAccessor HttpContextAccessor
 
@@ -88,7 +91,8 @@
             </div>
             <input type="text" 
                    @bind="searchQuery" 
-                   @onkeypress="@(async (e) => { if (e.Key == "Enter") await SearchClients(); })"
+                   @onkeydown="HandleKeyDown"
+                   @oninput="HandleInput"
                    placeholder="Введите название клиента..."
                    class="w-full pl-10 pr-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200">
         </div>
@@ -130,54 +134,107 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @if (searchResults > 0)
+                    @if (isSearching)
                     {
-                        <!-- Примеры результатов поиска -->
-                        <tr class="border-b border-gray-800 hover:bg-gray-800/30 transition-colors">
-                            <td class="py-4 px-4">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
-                                        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        <!-- Поиск в прогрессе -->
+                        <tr>
+                            <td colspan="6" class="py-12 text-center">
+                                <div class="text-gray-400">
+                                    <div class="search-progress-container">
+                                        <svg class="w-8 h-8 mx-auto mb-4 text-blue-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                                         </svg>
+                                        <h3 class="text-xl font-semibold mb-2">@(progress?.Status ?? "Выполняется поиск...")</h3>
+                                        @if (progress != null)
+                                        {
+                                            <div class="space-y-2 max-w-md mx-auto">
+                                                <div class="progress-bar-container">
+                                                    <div class="progress-bar-track bg-gray-700 rounded-full h-2">
+                                                        <div class="progress-bar-fill bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: @progress.Percentage%"></div>
+                                                    </div>
+                                                    <div class="text-sm text-gray-400">@progress.CompletedRealms из @progress.TotalRealms реалмов</div>
+                                                </div>
+                                                @if (!string.IsNullOrEmpty(progress.CurrentRealm))
+                                                {
+                                                    <div class="text-sm text-blue-400">🔍 Поиск в реалме: @progress.CurrentRealm</div>
+                                                }
+                                                @if (progress.ResultsFound > 0)
+                                                {
+                                                    <div class="text-sm text-green-400">✅ Найдено: @progress.ResultsFound клиентов</div>
+                                                }
+                                            </div>
+                                        }
                                     </div>
-                                    <div>
-                                        <p class="text-white font-medium">my-app-client</p>
-                                        <p class="text-sm text-gray-400">Веб-приложение</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="py-4 px-4">
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-900/50 text-purple-300">
-                                    production
-                                </span>
-                            </td>
-                            <td class="py-4 px-4">
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-900/50 text-blue-300">
-                                    Confidential
-                                </span>
-                            </td>
-                            <td class="py-4 px-4">
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-900/50 text-green-300">
-                                    Активен
-                                </span>
-                            </td>
-                            <td class="py-4 px-4 text-gray-400">5 дней назад</td>
-                            <td class="py-4 px-4">
-                                <div class="flex space-x-3">
-                                    <button class="text-blue-400 hover:text-blue-300 p-2 rounded-md hover:bg-blue-400/10 transition-colors">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                        </svg>
-                                    </button>
-                                    <button class="text-red-400 hover:text-red-300 p-2 rounded-md hover:bg-red-400/10 transition-colors">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                        </svg>
-                                    </button>
                                 </div>
                             </td>
                         </tr>
+                    }
+                    else if (searchResponse?.Clients?.Any() == true)
+                    {
+                        @foreach (var client in searchResponse.Clients)
+                        {
+                            <!-- Результаты поиска -->
+                            <tr class="border-b border-gray-800 hover:bg-gray-800/30 transition-colors">
+                                <td class="py-4 px-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-white font-medium">@client.Name</p>
+                                            <p class="text-sm text-gray-400">ID: @client.ClientId</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-900/50 text-purple-300">
+                                        @client.Realm
+                                    </span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    @if (!string.IsNullOrEmpty(client.Description))
+                                    {
+                                        <span class="text-sm text-gray-300">@client.Description</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-sm text-gray-500">-</span>
+                                    }
+                                </td>
+                                <td class="py-4 px-4">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium @(client.Enabled ? "bg-green-900/50 text-green-300" : "bg-red-900/50 text-red-300")">
+                                        @(client.Enabled ? "Активен" : "Отключен")
+                                    </span>
+                                </td>
+                                <td class="py-4 px-4 text-gray-400">
+                                    @if (client.LastModified != DateTime.MinValue)
+                                    {
+                                        @GetRelativeTimeString(client.LastModified)
+                                    }
+                                    else
+                                    {
+                                        <span class="text-gray-500">-</span>
+                                    }
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="flex space-x-3">
+                                        <button @onclick="() => ViewClient(client)" class="text-blue-400 hover:text-blue-300 p-2 rounded-md hover:bg-blue-400/10 transition-colors">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                            </svg>
+                                        </button>
+                                        <button @onclick="() => EditClient(client)" class="text-green-400 hover:text-green-300 p-2 rounded-md hover:bg-green-400/10 transition-colors">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 attachment2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                     }
                     else if (!string.IsNullOrEmpty(searchQuery))
                     {
@@ -298,7 +355,8 @@ else
     private int totalClients = 0;
     private int activeClients = 0;
     private int realmsCount = 0;
-    private int searchResults = 0;
+    private ClientsSearchResponse? searchResponse;
+    private SearchProgress? progress;
 
     protected override async Task OnInitializedAsync()
     {
@@ -306,28 +364,94 @@ else
         await LoadStatistics();
     }
 
+    private void HandleInput(ChangeEventArgs e)
+    {
+        Console.WriteLine($"HandleInput called with value: '{e.Value}'");
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        Console.WriteLine($"HandleKeyDown called: Key='{e.Key}', Code='{e.Code}', searchQuery='{searchQuery}'");
+        
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(searchQuery))
+        {
+            Console.WriteLine("Starting search...");
+            await SearchClients();
+        }
+        else
+        {
+            Console.WriteLine($"Search not started: Key={e.Key}, Query={searchQuery}");
+        }
+    }
+
     private async Task SearchClients()
     {
+        Console.WriteLine($"SearchClients called with query: '{searchQuery}'");
+        
         if (string.IsNullOrWhiteSpace(searchQuery))
+        {
+            Console.WriteLine("Search cancelled: empty query");
             return;
+        }
 
+        Console.WriteLine("Setting isSearching = true");
         isSearching = true;
-        
-        // Здесь будет логика поиска клиентов через Keycloak API
-        // Пока что симулируем результаты
-        await Task.Delay(500); // Имитация задержки API
-        
-        searchResults = searchQuery.ToLower().Contains("app") ? 3 : 0;
-        
+        searchResponse = null;
+        progress = null;
         StateHasChanged();
+        
+        try
+        {
+            Console.WriteLine("Creating progress reporter...");
+            var progressReporter = new Progress<SearchProgress>(p => 
+            {
+                Console.WriteLine($"Progress update: {p.Status}, {p.CompletedRealms}/{p.TotalRealms} realms, {p.ResultsFound} results");
+                progress = p;
+                StateHasChanged();
+            });
+
+            Console.WriteLine("Calling KeycloakAdminService.SearchClientsWithProgressAsync...");
+            searchResponse = await KeycloakAdminService.SearchClientsWithProgressAsync(
+                searchQuery.Trim(), 
+                progressReporter, 
+                CancellationToken.None);
+                
+            Console.WriteLine($"Search completed: Status={searchResponse.Status}, Results={searchResponse.TotalFound}");
+        }
+        catch (Exception ex)
+        {
+            searchResponse = new ClientsSearchResponse
+            {
+                Status = SearchStatus.Error,
+                ErrorMessage = ex.Message
+            };
+        }
+        finally
+        {
+            isSearching = false;
+            StateHasChanged();
+        }
     }
 
     private Task ClearSearch()
     {
         searchQuery = string.Empty;
         isSearching = false;
-        searchResults = 0;
+        searchResponse = null;
+        progress = null;
         StateHasChanged();
+        return Task.CompletedTask;
+    }
+    
+    private Task ViewClient(ClientSearchResult client)
+    {
+        // TODO: Реализовать просмотр деталей клиента
+        return Task.CompletedTask;
+    }
+    
+    private Task EditClient(ClientSearchResult client)
+    {
+        // TODO: Реализовать редактирование клиента
         return Task.CompletedTask;
     }
 
@@ -339,5 +463,49 @@ else
         activeClients = 42;
         realmsCount = 8;
         return Task.CompletedTask;
+    }
+    
+    private string GetRelativeTimeString(DateTime dateTime)
+    {
+        var diff = DateTime.UtcNow - dateTime;
+        
+        if (diff.TotalDays >= 1)
+            return $"{(int)diff.TotalDays} {GetDayWord((int)diff.TotalDays)} назад";
+        else if (diff.TotalHours >= 1)
+            return $"{(int)diff.TotalHours} {GetHourWord((int)diff.TotalHours)} назад";
+        else if (diff.TotalMinutes >= 1)
+            return $"{(int)diff.TotalMinutes} {GetMinuteWord((int)diff.TotalMinutes)} назад";
+        else
+            return "только что";
+    }
+    
+    private string GetDayWord(int days)
+    {
+        return days switch
+        {
+            1 => "день",
+            >= 2 and <= 4 => "дня",
+            _ => "дней"
+        };
+    }
+    
+    private string GetHourWord(int hours)
+    {
+        return hours switch
+        {
+            1 => "час",
+            >= 2 and <= 4 => "часа",
+            _ => "часов"
+        };
+    }
+    
+    private string GetMinuteWord(int minutes)
+    {
+        return minutes switch
+        {
+            1 => "минуту",
+            >= 2 and <= 4 => "минуты",
+            _ => "минут"
+        };
     }
 }

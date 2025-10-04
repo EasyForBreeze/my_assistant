@@ -1,4 +1,5 @@
 using new_assistant.Core.Entities;
+using new_assistant.Core.DTOs;
 
 namespace new_assistant.Core.Interfaces;
 
@@ -41,6 +42,24 @@ public interface IKeycloakAdminService
     /// Сгенерировать новый секрет для клиента.
     /// </summary>
     Task<string> RegenerateClientSecretAsync(string clientId, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Поиск клиентов по подстроке во всех реалмах (кроме master).
+    /// </summary>
+    Task<ClientsSearchResponse> SearchClientsAsync(string searchTerm, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Поиск клиентов с отслеживанием прогресса.
+    /// </summary>
+    Task<ClientsSearchResponse> SearchClientsWithProgressAsync(
+        string searchTerm, 
+        IProgress<SearchProgress> progress, 
+        CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Получить список всех реалмов (кроме master).
+    /// </summary>
+    Task<IEnumerable<string>> GetRealmsListAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>

@@ -1105,6 +1105,28 @@ html, body {
   width: 1.25rem;
 }
 
+/* Search Progress Indicator Styles */
+.search-progress-container {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.progress-bar-container {
+  margin: 16px 0;
+}
+
+.progress-bar-track {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background-color: #374151;
+}
+
+.progress-bar-fill {
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+}
+
 .h-5 {
   height: 1.25rem;
 }
@@ -1590,4 +1612,26 @@ html, body {
 
 .w-5 {
   width: 1.25rem;
+}
+
+/* Search Progress Indicator Styles */
+.search-progress-container {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.progress-bar-container {
+  margin: 16px 0;
+}
+
+.progress-bar-track {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background-color: #374151;
+}
+
+.progress-bar-fill {
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
 }

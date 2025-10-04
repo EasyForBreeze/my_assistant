@@ -70,8 +70,14 @@ var auditSettings = builder.Configuration
     .Get<AuditLoggingSettings>()
     ?? new AuditLoggingSettings();
 
+var keycloakAdminSettings = builder.Configuration
+    .GetSection("KeycloakAdmin")
+    .Get<KeycloakAdminSettings>()
+    ?? throw new InvalidOperationException("Keycloak Admin configuration is missing. Check the KeycloakAdmin section in appsettings.json.");
+
 // Регистрируем настройки как singleton, чтобы их можно было инжектировать через IOptionsSnapshot/IOptionsMonitor при необходимости.
 builder.Services.AddSingleton(keycloakAuthSettings);
+builder.Services.AddSingleton(keycloakAdminSettings);
 builder.Services.AddSingleton(rateLimitingSettings);
 builder.Services.AddSingleton(tokenValidationSettings);
 builder.Services.AddSingleton(auditSettings);
@@ -100,7 +106,9 @@ builder.Services.AddHangfire(configuration => configuration
 builder.Services.AddHangfireServer();
 
 // Регистрация сервисов
-// builder.Services.AddScoped<IKeycloakAdminService, KeycloakAdminService>();
+builder.Services.AddHttpClient<KeycloakHttpClient>();
+builder.Services.AddScoped<KeycloakHttpClient>();
+builder.Services.AddScoped<IKeycloakAdminService, KeycloakAdminService>();
 // builder.Services.AddScoped<IClientManagementService, ClientManagementService>();
 // builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IUserRoleService, UserRoleService>();
