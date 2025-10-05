@@ -3,6 +3,8 @@
 @using new_assistant.Core.DTOs
 @using Microsoft.AspNetCore.Authorization
 @using System.Linq
+@using System.Threading
+@using System.Threading.Tasks
 @inject IUserRoleService UserRoleService
 @inject IKeycloakAdminService KeycloakAdminService
 @inject NavigationManager Navigation
@@ -104,7 +106,7 @@
 <!-- Search Results -->
 @if (isSearching || (!string.IsNullOrEmpty(searchQuery) && (searchResponse?.Clients?.Any() == true || progress?.Status != null)))
 {
-    <div class="card animate-stagger p-6" id="admin-search-results-section">
+    <div class="card p-6@(shouldAnimateSearchResults ? " animate-fade" : string.Empty)" id="admin-search-results-section">
         <div class="mb-6">
             <h3 class="text-xl font-semibold text-white">Результаты поиска</h3>
             @if (searchResponse != null && searchResponse.Status == SearchStatus.Completed)
@@ -388,6 +390,8 @@ else
     </div>
 }
 
+@implements IDisposable
+
 @code {
     private string searchQuery = string.Empty;
     private bool isSearching = false;
@@ -399,6 +403,8 @@ else
     private int currentPage = 1;
     private const int itemsPerPage = 10;
     private bool isTransitioning = false;
+    private bool shouldAnimateSearchResults;
+    private CancellationTokenSource? searchResultsAnimationResetCts;
 
     protected override async Task OnInitializedAsync()
     {
@@ -465,7 +471,7 @@ else
     private async Task SearchClients()
     {
         Console.WriteLine($"SearchClients called with query: '{searchQuery}'");
-        
+
         if (string.IsNullOrWhiteSpace(searchQuery))
         {
             Console.WriteLine("Search cancelled: empty query");
@@ -478,8 +484,10 @@ else
         progress = null;
         currentPage = 1; // Сбрасываем на первую страницу при новом поиске
         isTransitioning = false; // Сбрасываем состояние анимации
+        shouldAnimateSearchResults = false;
+        CancelPendingSearchResultsAnimationReset();
         StateHasChanged();
-        
+
         try
         {
             Console.WriteLine("Creating progress reporter...");
@@ -492,11 +500,13 @@ else
 
             Console.WriteLine("Calling KeycloakAdminService.SearchClientsWithProgressAsync...");
             searchResponse = await KeycloakAdminService.SearchClientsWithProgressAsync(
-                searchQuery.Trim(), 
-                progressReporter, 
+                searchQuery.Trim(),
+                progressReporter,
                 CancellationToken.None);
-                
+
             Console.WriteLine($"Search completed: Status={searchResponse.Status}, Results={searchResponse.TotalFound}");
+            shouldAnimateSearchResults = searchResponse?.Clients?.Any() == true;
+            ScheduleSearchResultsAnimationReset();
         }
         catch (Exception ex)
         {
@@ -505,6 +515,8 @@ else
                 Status = SearchStatus.Error,
                 ErrorMessage = ex.Message
             };
+            shouldAnimateSearchResults = false;
+            CancelPendingSearchResultsAnimationReset();
         }
         finally
         {
@@ -521,10 +533,12 @@ else
         progress = null;
         currentPage = 1;
         isTransitioning = false; // Сбрасываем состояние анимации
+        shouldAnimateSearchResults = false;
+        CancelPendingSearchResultsAnimationReset();
         StateHasChanged();
         return Task.CompletedTask;
     }
-    
+
     private Task ViewClient(ClientSearchResult client)
     {
         // TODO: Реализовать просмотр деталей клиента
@@ -546,7 +560,67 @@ else
         realmsCount = 8;
         return Task.CompletedTask;
     }
-    
+
+    private void ScheduleSearchResultsAnimationReset()
+    {
+        CancelPendingSearchResultsAnimationReset();
+
+        if (!shouldAnimateSearchResults)
+        {
+            return;
+        }
+
+        var cts = new CancellationTokenSource();
+        searchResultsAnimationResetCts = cts;
+
+        _ = ResetSearchResultsAnimationAsync(cts);
+    }
+
+    private void CancelPendingSearchResultsAnimationReset()
+    {
+        if (searchResultsAnimationResetCts is { } cts && !cts.IsCancellationRequested)
+        {
+            cts.Cancel();
+        }
+    }
+
+    private async Task ResetSearchResultsAnimationAsync(CancellationTokenSource cts)
+    {
+        try
+        {
+            await Task.Delay(350, cts.Token);
+
+            await InvokeAsync(() =>
+            {
+                if (!cts.IsCancellationRequested)
+                {
+                    shouldAnimateSearchResults = false;
+                    StateHasChanged();
+                }
+            });
+        }
+        catch (TaskCanceledException)
+        {
+            // Игнорируем отмену анимации
+        }
+        finally
+        {
+            cts.Dispose();
+
+            if (ReferenceEquals(searchResultsAnimationResetCts, cts))
+            {
+                searchResultsAnimationResetCts = null;
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        CancelPendingSearchResultsAnimationReset();
+        searchResultsAnimationResetCts?.Dispose();
+        searchResultsAnimationResetCts = null;
+    }
+
     private string GetRelativeTimeString(DateTime dateTime)
     {
         var diff = DateTime.UtcNow - dateTime;
