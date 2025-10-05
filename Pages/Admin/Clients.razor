@@ -104,7 +104,7 @@
 <!-- Search Results -->
 @if (isSearching || (!string.IsNullOrEmpty(searchQuery) && (searchResponse?.Clients?.Any() == true || progress?.Status != null)))
 {
-    <div class="card animate-stagger p-6" id="admin-search-results-section">
+    <div class="card p-6@(shouldAnimateSearchResults ? " animate-fade" : string.Empty)" id="admin-search-results-section">
         <div class="mb-6">
             <h3 class="text-xl font-semibold text-white">Результаты поиска</h3>
             @if (searchResponse != null && searchResponse.Status == SearchStatus.Completed)
@@ -399,6 +399,7 @@ else
     private int currentPage = 1;
     private const int itemsPerPage = 10;
     private bool isTransitioning = false;
+    private bool shouldAnimateSearchResults;
 
     protected override async Task OnInitializedAsync()
     {
@@ -478,6 +479,7 @@ else
         progress = null;
         currentPage = 1; // Сбрасываем на первую страницу при новом поиске
         isTransitioning = false; // Сбрасываем состояние анимации
+        shouldAnimateSearchResults = false;
         StateHasChanged();
         
         try
@@ -497,6 +499,7 @@ else
                 CancellationToken.None);
                 
             Console.WriteLine($"Search completed: Status={searchResponse.Status}, Results={searchResponse.TotalFound}");
+            shouldAnimateSearchResults = searchResponse?.Clients?.Any() == true;
         }
         catch (Exception ex)
         {
@@ -521,8 +524,20 @@ else
         progress = null;
         currentPage = 1;
         isTransitioning = false; // Сбрасываем состояние анимации
+        shouldAnimateSearchResults = false;
         StateHasChanged();
         return Task.CompletedTask;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (shouldAnimateSearchResults)
+        {
+            shouldAnimateSearchResults = false;
+            await InvokeAsync(StateHasChanged);
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
     }
     
     private Task ViewClient(ClientSearchResult client)
