@@ -115,16 +115,16 @@
         
         <!-- Table -->
         <div class="overflow-x-auto transition-opacity duration-300 ease-in-out" 
-             style="opacity: @(isTransitioning ? "0.5" : "1")">
-            <table class="w-full">
+             style="opacity: @(isTransitioning ? "0.3" : "1")">
+            <table class="w-full" style="table-layout: fixed;">
                 <thead>
                     <tr class="border-b border-gray-700">
-                        <th class="text-left py-3 px-4 text-gray-300 font-medium">Название</th>
-                        <th class="text-left py-3 px-4 text-gray-300 font-medium">Реалм</th>
-                        <th class="text-left py-3 px-4 text-gray-300 font-medium">Тип</th>
-                        <th class="text-left py-3 px-4 text-gray-300 font-medium">Статус</th>
-                        <th class="text-left py-3 px-4 text-gray-300 font-medium">Создан</th>
-                        <th class="text-left py-3 px-4 text-gray-300 font-medium">Действия</th>
+                        <th class="text-left py-3 px-4 text-gray-300 font-medium" style="width: 25%;">Название</th>
+                        <th class="text-left py-3 px-4 text-gray-300 font-medium" style="width: 10%;">Реалм</th>
+                        <th class="text-left py-3 px-4 text-gray-300 font-medium" style="width: 10%;">Тип</th>
+                        <th class="text-left py-3 px-4 text-gray-300 font-medium" style="width: 10%;">Статус</th>
+                        <th class="text-left py-3 px-4 text-gray-300 font-medium" style="width: 10%;">Создан</th>
+                        <th class="text-left py-3 px-4 text-gray-300 font-medium" style="width: 10%;">Действия</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -169,7 +169,7 @@
                         {
                             <!-- Результаты поиска -->
                             <tr class="border-b border-gray-800 hover:bg-gray-800/30 transition-all duration-300 ease-out" 
-                                style="animation: @(isTransitioning ? "page-fade-out 0.3s ease-in-out forwards" : "page-fade-in 0.4s ease-in-out forwards");">
+                                style="opacity: @(isTransitioning ? "0.3" : "1");">
                                 <td class="py-4 px-4">
                                     <div class="flex items-center space-x-3">
                                         <div class="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
@@ -288,10 +288,10 @@
             </table>
         </div>
         
-        <!-- Pagination - ВНУТРИ CARD КОНТЕЙНЕРА -->
+        <!-- Простая пагинация с фиксированной высотой -->
         @if (searchResponse?.Clients?.Any() == true)
         {
-            <div class="pagination-container flex items-center justify-between mt-16 px-4 animate-stagger" style="margin-top: 80px !important;">
+            <div class="flex items-center justify-between px-4" style="margin-top: 20px !important; min-height: 48px;">
                 <div class="text-sm text-gray-400">
                     Показано @((currentPage - 1) * itemsPerPage + 1)-@(Math.Min(currentPage * itemsPerPage, searchResponse.Clients.Count)) из @searchResponse.Clients.Count клиентов
                 </div>
@@ -300,64 +300,35 @@
                 {
                     <div class="flex items-center space-x-2">
                         <!-- Previous Button -->
-                    <button @onclick="() => GoToPage(currentPage - 1)" 
-                            disabled="@(currentPage <= 1)"
-                            class="pagination-button px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg border border-gray-600 hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-700/50">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                        </svg>
-                    </button>
-                    
-                    <!-- Page Numbers -->
-                    @{
-                        var totalPages = GetTotalPages();
-                        var startPage = Math.Max(1, currentPage - 2);
-                        var endPage = Math.Min(totalPages, currentPage + 2);
-                    }
-                    
-                    @if (startPage > 1)
-                    {
-                        <button @onclick="() => GoToPage(1)" 
-                                class="pagination-button px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg border border-gray-600 hover:border-gray-500">
-                            1
+                        <button @onclick="() => GoToPage(currentPage - 1)" 
+                                disabled="@(currentPage <= 1)"
+                                class="px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg border border-gray-600 hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
                         </button>
-                        @if (startPage > 2)
+                        
+                        <!-- Простые номера страниц -->
+                        @for (int i = 1; i <= GetTotalPages(); i++)
                         {
-                            <span class="px-2 text-gray-500">...</span>
+                            var pageNumber = i;
+                            <button @onclick="() => GoToPage(pageNumber)" 
+                                    class="px-3 py-2 text-sm rounded-lg border @(currentPage == pageNumber ? "bg-blue-600 text-white border-blue-500" : "bg-gray-700/50 hover:bg-gray-600/50 text-white border-gray-600 hover:border-gray-500")">
+                                @pageNumber
+                            </button>
                         }
-                    }
-                    
-                    @for (int i = startPage; i <= endPage; i++)
-                    {
-                        var pageNumber = i;
-                        <button @onclick="() => GoToPage(pageNumber)" 
-                                class="pagination-button px-3 py-2 text-sm rounded-lg border @(currentPage == pageNumber ? "active bg-blue-600 text-white border-blue-500" : "bg-gray-700/50 hover:bg-gray-600/50 text-white border-gray-600 hover:border-gray-500")">
-                            @pageNumber
+                        
+                        <!-- Next Button -->
+                        <button @onclick="() => GoToPage(currentPage + 1)" 
+                                disabled="@(currentPage >= GetTotalPages())"
+                                class="px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg border border-gray-600 hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
                         </button>
-                    }
-                    
-                    @if (endPage < totalPages)
-                    {
-                        @if (endPage < totalPages - 1)
-                        {
-                            <span class="px-2 text-gray-500">...</span>
-                        }
-                        <button @onclick="() => GoToPage(totalPages)" 
-                                class="pagination-button px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg border border-gray-600 hover:border-gray-500">
-                            @totalPages
-                        </button>
-                    }
-                    
-                    <!-- Next Button -->
-                    <button @onclick="() => GoToPage(currentPage + 1)" 
-                            disabled="@(currentPage >= GetTotalPages())"
-                            class="pagination-button px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg border border-gray-600 hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-700/50">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                    </button>
                     </div>
                 }
+
             </div>
         }
     </div>
@@ -455,7 +426,7 @@ else
         var totalPages = GetTotalPages();
         if (page >= 1 && page <= totalPages && page != currentPage)
         {
-            // Запускаем анимацию fade-out
+            // Простая анимация fade-out
             isTransitioning = true;
             StateHasChanged();
             
@@ -465,7 +436,7 @@ else
             // Меняем страницу
             currentPage = page;
             
-            // Запускаем анимацию fade-in
+            // Простая анимация fade-in
             isTransitioning = false;
             StateHasChanged();
             
