@@ -119,15 +119,12 @@ public class KeycloakHttpClient
         try
         {
             var token = await GetAdminTokenAsync(cancellationToken);
-            _logger.LogInformation("Токен получен: {TokenPreview}", token?.Substring(0, Math.Min(20, token?.Length ?? 0)) + "...");
+            _logger.LogInformation("Токен получен: {TokenPreview}", token);
             
             // Пробуем разные варианты endpoint для разных версий Keycloak
             var endpoints = new[]
             {
                 "/admin/realms?briefRepresentation=true",           // Стандартный с briefRepresentation
-                "/admin/realms",                                    // Стандартный без параметров
-                "/admin/v1/realms?briefRepresentation=true",        // С версионированием
-                "/auth/admin/realms?briefRepresentation=true"       // Старый формат
             };
             
             foreach (var endpoint in endpoints)

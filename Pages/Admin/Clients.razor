@@ -97,27 +97,20 @@
                    class="w-full pl-10 pr-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200">
         </div>
         
-        
-        <!-- Active Search Indicator -->
-        @if (!string.IsNullOrEmpty(searchQuery))
-        {
-            <div class="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                <div class="flex items-center space-x-2">
-                    <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
-                    <span class="text-sm text-blue-300">Поиск: <span class="font-medium text-blue-200">"@searchQuery"</span></span>
-                </div>
-            </div>
-        }
     </div>
 </div>
 
 
 <!-- Search Results -->
-@if (isSearching)
+@if (isSearching || (!string.IsNullOrEmpty(searchQuery) && (searchResponse?.Clients?.Any() == true || progress?.Status != null)))
 {
     <div class="card animate-stagger p-6" id="admin-search-results-section">
         <div class="mb-6">
             <h3 class="text-xl font-semibold text-white">Результаты поиска</h3>
+            @if (searchResponse != null && searchResponse.Status == SearchStatus.Completed)
+            {
+                <p class="text-sm text-gray-400 mt-1">Найдено @searchResponse.TotalFound клиентов за @searchResponse.SearchTime.TotalMilliseconds.ToString("F0")мс</p>
+            }
         </div>
         
         <!-- Table -->
@@ -171,7 +164,7 @@
                     }
                     else if (searchResponse?.Clients?.Any() == true)
                     {
-                        @foreach (var client in searchResponse.Clients)
+                        @foreach (var client in GetPaginatedClients())
                         {
                             <!-- Результаты поиска -->
                             <tr class="border-b border-gray-800 hover:bg-gray-800/30 transition-colors">
@@ -292,6 +285,76 @@
                 </tbody>
             </table>
         </div>
+        
+        <!-- Pagination -->
+        @if (searchResponse?.Clients?.Any() == true && GetTotalPages() > 1)
+        {
+            <div class="flex items-center justify-between mt-6 px-4">
+                <div class="text-sm text-gray-400">
+                    Показано @((currentPage - 1) * itemsPerPage + 1)-@(Math.Min(currentPage * itemsPerPage, searchResponse.Clients.Count)) из @searchResponse.Clients.Count клиентов
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <!-- Previous Button -->
+                    <button @onclick="() => GoToPage(currentPage - 1)" 
+                            disabled="@(currentPage <= 1)"
+                            class="px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-all duration-200 border border-gray-600 hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-700/50">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- Page Numbers -->
+                    @{
+                        var totalPages = GetTotalPages();
+                        var startPage = Math.Max(1, currentPage - 2);
+                        var endPage = Math.Min(totalPages, currentPage + 2);
+                    }
+                    
+                    @if (startPage > 1)
+                    {
+                        <button @onclick="() => GoToPage(1)" 
+                                class="px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-all duration-200 border border-gray-600 hover:border-gray-500">
+                            1
+                        </button>
+                        @if (startPage > 2)
+                        {
+                            <span class="px-2 text-gray-500">...</span>
+                        }
+                    }
+                    
+                    @for (int i = startPage; i <= endPage; i++)
+                    {
+                        var pageNumber = i;
+                        <button @onclick="() => GoToPage(pageNumber)" 
+                                class="px-3 py-2 text-sm rounded-lg transition-all duration-200 border @(currentPage == pageNumber ? "bg-blue-600 text-white border-blue-500" : "bg-gray-700/50 hover:bg-gray-600/50 text-white border-gray-600 hover:border-gray-500")">
+                            @pageNumber
+                        </button>
+                    }
+                    
+                    @if (endPage < totalPages)
+                    {
+                        @if (endPage < totalPages - 1)
+                        {
+                            <span class="px-2 text-gray-500">...</span>
+                        }
+                        <button @onclick="() => GoToPage(totalPages)" 
+                                class="px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-all duration-200 border border-gray-600 hover:border-gray-500">
+                            @totalPages
+                        </button>
+                    }
+                    
+                    <!-- Next Button -->
+                    <button @onclick="() => GoToPage(currentPage + 1)" 
+                            disabled="@(currentPage >= GetTotalPages())"
+                            class="px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-all duration-200 border border-gray-600 hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-700/50">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        }
     </div>
 }
 else
@@ -357,6 +420,8 @@ else
     private int realmsCount = 0;
     private ClientsSearchResponse? searchResponse;
     private SearchProgress? progress;
+    private int currentPage = 1;
+    private const int itemsPerPage = 10;
 
     protected override async Task OnInitializedAsync()
     {
@@ -364,9 +429,35 @@ else
         await LoadStatistics();
     }
 
+    private IEnumerable<ClientSearchResult> GetPaginatedClients()
+    {
+        if (searchResponse?.Clients == null) return Enumerable.Empty<ClientSearchResult>();
+        
+        return searchResponse.Clients
+            .Skip((currentPage - 1) * itemsPerPage)
+            .Take(itemsPerPage);
+    }
+
+    private int GetTotalPages()
+    {
+        if (searchResponse?.Clients == null) return 0;
+        return (int)Math.Ceiling((double)searchResponse.Clients.Count / itemsPerPage);
+    }
+
+    private void GoToPage(int page)
+    {
+        var totalPages = GetTotalPages();
+        if (page >= 1 && page <= totalPages)
+        {
+            currentPage = page;
+            StateHasChanged();
+        }
+    }
+
     private void HandleInput(ChangeEventArgs e)
     {
-        Console.WriteLine($"HandleInput called with value: '{e.Value}'");
+        searchQuery = e.Value?.ToString() ?? string.Empty;
+        Console.WriteLine($"HandleInput called with value: '{searchQuery}'");
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
@@ -377,10 +468,6 @@ else
         {
             Console.WriteLine("Starting search...");
             await SearchClients();
-        }
-        else
-        {
-            Console.WriteLine($"Search not started: Key={e.Key}, Query={searchQuery}");
         }
     }
 
@@ -398,6 +485,7 @@ else
         isSearching = true;
         searchResponse = null;
         progress = null;
+        currentPage = 1; // Сбрасываем на первую страницу при новом поиске
         StateHasChanged();
         
         try
@@ -439,6 +527,7 @@ else
         isSearching = false;
         searchResponse = null;
         progress = null;
+        currentPage = 1;
         StateHasChanged();
         return Task.CompletedTask;
     }
