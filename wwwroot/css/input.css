@@ -5,6 +5,21 @@
 @source "../App.razor";
 @source "../_Imports.razor";
 
+.animate-fade {
+  animation: fadeInOpacity 0.3s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInOpacity {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
         /* Простая кнопка создания клиента */
         @layer components {
           .create-client-btn {
