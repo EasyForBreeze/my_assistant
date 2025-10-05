@@ -1127,6 +1127,138 @@ html, body {
   border-radius: 8px;
 }
 
+/* Pagination animations */
+.pagination-container {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: pagination-fade-in 0.5s ease-out forwards;
+}
+
+@keyframes pagination-fade-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pagination-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(1);
+}
+
+.pagination-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.pagination-button:active {
+  transform: scale(0.95);
+  transition: all 0.1s ease;
+}
+
+.pagination-button.active {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transform: scale(1.02);
+}
+
+/* Table row animations */
+.table-row-enter {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.table-row-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.table-row-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.table-row-exit-active {
+  opacity: 0;
+  transform: translateX(20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Page transition overlay */
+.page-transition-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(17, 24, 39, 0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.page-transition-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.page-transition-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(59, 130, 246, 0.3);
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Table row enter animation */
+@keyframes table-row-enter {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Page transition animations */
+@keyframes page-fade-out {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes page-fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.page-transition-fade-out {
+  animation: page-fade-out 0.3s ease-in-out forwards;
+}
+
+.page-transition-fade-in {
+  animation: page-fade-in 0.4s ease-in-out forwards;
+}
+
 .h-5 {
   height: 1.25rem;
 }
@@ -1634,4 +1766,136 @@ html, body {
   background: linear-gradient(90deg, #3b82f6, #1d4ed8);
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 8px;
+}
+
+/* Pagination animations */
+.pagination-container {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: pagination-fade-in 0.5s ease-out forwards;
+}
+
+@keyframes pagination-fade-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pagination-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(1);
+}
+
+.pagination-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.pagination-button:active {
+  transform: scale(0.95);
+  transition: all 0.1s ease;
+}
+
+.pagination-button.active {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transform: scale(1.02);
+}
+
+/* Table row animations */
+.table-row-enter {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.table-row-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.table-row-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.table-row-exit-active {
+  opacity: 0;
+  transform: translateX(20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Page transition overlay */
+.page-transition-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(17, 24, 39, 0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.page-transition-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.page-transition-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(59, 130, 246, 0.3);
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Table row enter animation */
+@keyframes table-row-enter {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Page transition animations */
+@keyframes page-fade-out {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes page-fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.page-transition-fade-out {
+  animation: page-fade-out 0.3s ease-in-out forwards;
+}
+
+.page-transition-fade-in {
+  animation: page-fade-in 0.4s ease-in-out forwards;
 }

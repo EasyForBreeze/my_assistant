@@ -114,7 +114,8 @@
         </div>
         
         <!-- Table -->
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto transition-opacity duration-300 ease-in-out" 
+             style="opacity: @(isTransitioning ? "0.5" : "1")">
             <table class="w-full">
                 <thead>
                     <tr class="border-b border-gray-700">
@@ -167,7 +168,8 @@
                         @foreach (var client in GetPaginatedClients())
                         {
                             <!-- Результаты поиска -->
-                            <tr class="border-b border-gray-800 hover:bg-gray-800/30 transition-colors">
+                            <tr class="border-b border-gray-800 hover:bg-gray-800/30 transition-all duration-300 ease-out" 
+                                style="animation: @(isTransitioning ? "page-fade-out 0.3s ease-in-out forwards" : "page-fade-in 0.4s ease-in-out forwards");">
                                 <td class="py-4 px-4">
                                     <div class="flex items-center space-x-3">
                                         <div class="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
@@ -286,19 +288,21 @@
             </table>
         </div>
         
-        <!-- Pagination -->
-        @if (searchResponse?.Clients?.Any() == true && GetTotalPages() > 1)
+        <!-- Pagination - ВНУТРИ CARD КОНТЕЙНЕРА -->
+        @if (searchResponse?.Clients?.Any() == true)
         {
-            <div class="flex items-center justify-between mt-6 px-4">
+            <div class="pagination-container flex items-center justify-between mt-16 px-4 animate-stagger" style="margin-top: 80px !important;">
                 <div class="text-sm text-gray-400">
                     Показано @((currentPage - 1) * itemsPerPage + 1)-@(Math.Min(currentPage * itemsPerPage, searchResponse.Clients.Count)) из @searchResponse.Clients.Count клиентов
                 </div>
                 
-                <div class="flex items-center space-x-2">
-                    <!-- Previous Button -->
+                @if (GetTotalPages() > 1)
+                {
+                    <div class="flex items-center space-x-2">
+                        <!-- Previous Button -->
                     <button @onclick="() => GoToPage(currentPage - 1)" 
                             disabled="@(currentPage <= 1)"
-                            class="px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-all duration-200 border border-gray-600 hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-700/50">
+                            class="pagination-button px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg border border-gray-600 hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-700/50">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                         </svg>
@@ -314,7 +318,7 @@
                     @if (startPage > 1)
                     {
                         <button @onclick="() => GoToPage(1)" 
-                                class="px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-all duration-200 border border-gray-600 hover:border-gray-500">
+                                class="pagination-button px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg border border-gray-600 hover:border-gray-500">
                             1
                         </button>
                         @if (startPage > 2)
@@ -327,7 +331,7 @@
                     {
                         var pageNumber = i;
                         <button @onclick="() => GoToPage(pageNumber)" 
-                                class="px-3 py-2 text-sm rounded-lg transition-all duration-200 border @(currentPage == pageNumber ? "bg-blue-600 text-white border-blue-500" : "bg-gray-700/50 hover:bg-gray-600/50 text-white border-gray-600 hover:border-gray-500")">
+                                class="pagination-button px-3 py-2 text-sm rounded-lg border @(currentPage == pageNumber ? "active bg-blue-600 text-white border-blue-500" : "bg-gray-700/50 hover:bg-gray-600/50 text-white border-gray-600 hover:border-gray-500")">
                             @pageNumber
                         </button>
                     }
@@ -339,7 +343,7 @@
                             <span class="px-2 text-gray-500">...</span>
                         }
                         <button @onclick="() => GoToPage(totalPages)" 
-                                class="px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-all duration-200 border border-gray-600 hover:border-gray-500">
+                                class="pagination-button px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg border border-gray-600 hover:border-gray-500">
                             @totalPages
                         </button>
                     }
@@ -347,12 +351,13 @@
                     <!-- Next Button -->
                     <button @onclick="() => GoToPage(currentPage + 1)" 
                             disabled="@(currentPage >= GetTotalPages())"
-                            class="px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-all duration-200 border border-gray-600 hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-700/50">
+                            class="pagination-button px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg border border-gray-600 hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-700/50">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                         </svg>
                     </button>
-                </div>
+                    </div>
+                }
             </div>
         }
     </div>
@@ -422,6 +427,7 @@ else
     private SearchProgress? progress;
     private int currentPage = 1;
     private const int itemsPerPage = 10;
+    private bool isTransitioning = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -444,13 +450,27 @@ else
         return (int)Math.Ceiling((double)searchResponse.Clients.Count / itemsPerPage);
     }
 
-    private void GoToPage(int page)
+    private async Task GoToPage(int page)
     {
         var totalPages = GetTotalPages();
-        if (page >= 1 && page <= totalPages)
+        if (page >= 1 && page <= totalPages && page != currentPage)
         {
-            currentPage = page;
+            // Запускаем анимацию fade-out
+            isTransitioning = true;
             StateHasChanged();
+            
+            // Ждем завершения fade-out анимации
+            await Task.Delay(300);
+            
+            // Меняем страницу
+            currentPage = page;
+            
+            // Запускаем анимацию fade-in
+            isTransitioning = false;
+            StateHasChanged();
+            
+            // Небольшая задержка для завершения fade-in
+            await Task.Delay(400);
         }
     }
 
@@ -486,6 +506,7 @@ else
         searchResponse = null;
         progress = null;
         currentPage = 1; // Сбрасываем на первую страницу при новом поиске
+        isTransitioning = false; // Сбрасываем состояние анимации
         StateHasChanged();
         
         try
@@ -528,6 +549,7 @@ else
         searchResponse = null;
         progress = null;
         currentPage = 1;
+        isTransitioning = false; // Сбрасываем состояние анимации
         StateHasChanged();
         return Task.CompletedTask;
     }
