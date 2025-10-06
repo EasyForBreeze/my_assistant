@@ -105,10 +105,10 @@
 
 
 <!-- Search Results -->
-@if (isSearching || (hasSearched && searchResponse != null && !string.IsNullOrWhiteSpace(searchQuery)))
+@if (showResultsSection)
 {
     <div class="animate-stagger">
-        <div class="card p-6" id="admin-search-results-section">
+        <div class="@GetResultsContainerClasses()" id="admin-search-results-section">
         <div class="mb-6">
             <h3 class="text-xl font-semibold text-white">Результаты поиска</h3>
             <!-- Зарезервированное место для информации о результатах -->
@@ -413,6 +413,8 @@ else
     private const int itemsPerPage = 10;
     private bool isTransitioning = false;
     private bool hasSearched = false;
+    private bool showResultsSection = false;
+    private bool isResultsFadingOut = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -456,9 +458,15 @@ else
         }
     }
 
-    private void HandleInput(ChangeEventArgs e)
+    private async Task HandleInput(ChangeEventArgs e)
     {
         searchQuery = e.Value?.ToString() ?? string.Empty;
+        
+        // Если есть результаты поиска, запускаем анимацию исчезновения
+        if (showResultsSection)
+        {
+            await TriggerFadeOut();
+        }
         
         // При любом изменении в поле поиска сбрасываем результаты (как при нажатии "Очистить")
         isSearching = false;
@@ -466,6 +474,8 @@ else
         progress = null;
         currentPage = 1;
         hasSearched = false;
+        showResultsSection = false;
+        isResultsFadingOut = false;
         
         StateHasChanged();
     }
@@ -490,6 +500,8 @@ else
         searchResponse = null;
         progress = null;
         currentPage = 1;
+        showResultsSection = true;
+        isResultsFadingOut = false;
         StateHasChanged();
 
         try
@@ -520,16 +532,23 @@ else
         }
     }
 
-    private Task ClearSearch()
+    private async Task ClearSearch()
     {
+        // Если есть результаты поиска, запускаем анимацию исчезновения
+        if (showResultsSection)
+        {
+            await TriggerFadeOut();
+        }
+        
         searchQuery = string.Empty;
         isSearching = false;
         searchResponse = null;
         progress = null;
         currentPage = 1;
         hasSearched = false;
+        showResultsSection = false;
+        isResultsFadingOut = false;
         StateHasChanged();
-        return Task.CompletedTask;
     }
 
     private Task ViewClient(ClientSearchResult client)
@@ -577,6 +596,29 @@ else
             >= 2 and <= 4 => "дня",
             _ => "дней"
         };
+    }
+
+    private string GetResultsContainerClasses()
+    {
+        var baseClasses = "card p-6 transition-all duration-300 ease-out";
+        
+        if (isResultsFadingOut)
+        {
+            return $"{baseClasses} opacity-0 translate-y-2";
+        }
+        
+        return $"{baseClasses} opacity-100 translate-y-0";
+    }
+
+    private async Task TriggerFadeOut()
+    {
+        isResultsFadingOut = true;
+        StateHasChanged();
+        
+        // Ждем завершения анимации исчезновения (300ms)
+        await Task.Delay(300);
+        
+        isResultsFadingOut = false;
     }
     
     private string GetHourWord(int hours)
