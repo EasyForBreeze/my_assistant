@@ -460,15 +460,14 @@ else
     {
         searchQuery = e.Value?.ToString() ?? string.Empty;
         
-        // Если поле стало пустым, скрываем результаты
-        if (string.IsNullOrWhiteSpace(searchQuery))
-        {
-            hasSearched = false;
-            searchResponse = null;
-            progress = null;
-            currentPage = 1;
-            StateHasChanged();
-        }
+        // При любом изменении в поле поиска сбрасываем результаты (как при нажатии "Очистить")
+        isSearching = false;
+        searchResponse = null;
+        progress = null;
+        currentPage = 1;
+        hasSearched = false;
+        
+        StateHasChanged();
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
