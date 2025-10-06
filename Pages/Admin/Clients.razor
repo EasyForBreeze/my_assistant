@@ -415,6 +415,18 @@ else
     private bool hasSearched = false;
     private bool showResultsSection = false;
     private bool isResultsFadingOut = false;
+    
+    // Client Details Modal
+    private bool showClientModal = false;
+    private ClientDetailsDto? selectedClientDetails;
+    private bool isLoadingClientDetails = false;
+    private string? clientDetailsError;
+    private string selectedClientId = string.Empty;
+    private string selectedClientRealm = string.Empty;
+<<<<<<< HEAD
+=======
+    private CancellationTokenSource? resultsFadeCts;
+>>>>>>> cbb889bb0bbcb247a53d4aa0182623f88ea21a5f
 
     protected override async Task OnInitializedAsync()
     {
@@ -474,9 +486,14 @@ else
         progress = null;
         currentPage = 1;
         hasSearched = false;
+<<<<<<< HEAD
         showResultsSection = false;
         isResultsFadingOut = false;
         
+=======
+
+        UpdateResultsVisibility();
+>>>>>>> cbb889bb0bbcb247a53d4aa0182623f88ea21a5f
         StateHasChanged();
     }
 
@@ -500,8 +517,12 @@ else
         searchResponse = null;
         progress = null;
         currentPage = 1;
+<<<<<<< HEAD
         showResultsSection = true;
         isResultsFadingOut = false;
+=======
+        UpdateResultsVisibility();
+>>>>>>> cbb889bb0bbcb247a53d4aa0182623f88ea21a5f
         StateHasChanged();
 
         try
@@ -528,6 +549,7 @@ else
         finally
         {
             isSearching = false;
+            UpdateResultsVisibility();
             StateHasChanged();
         }
     }
@@ -546,8 +568,12 @@ else
         progress = null;
         currentPage = 1;
         hasSearched = false;
+<<<<<<< HEAD
         showResultsSection = false;
         isResultsFadingOut = false;
+=======
+        UpdateResultsVisibility();
+>>>>>>> cbb889bb0bbcb247a53d4aa0182623f88ea21a5f
         StateHasChanged();
     }
 
@@ -571,6 +597,8 @@ else
 
     public void Dispose()
     {
+        resultsFadeCts?.Cancel();
+        resultsFadeCts?.Dispose();
         // Ничего не нужно освобождать
     }
 
@@ -640,4 +668,80 @@ else
             _ => "минут"
         };
     }
+
+    private bool ShouldDisplayResultsSection() =>
+        isSearching || (hasSearched && searchResponse != null && !string.IsNullOrWhiteSpace(searchQuery));
+
+    private void UpdateResultsVisibility()
+    {
+        var shouldShow = ShouldDisplayResultsSection();
+
+        if (shouldShow)
+        {
+            resultsFadeCts?.Cancel();
+
+            if (!showResultsSection || isResultsFadingOut)
+            {
+                showResultsSection = true;
+                isResultsFadingOut = false;
+                InvokeAsync(StateHasChanged);
+            }
+
+            return;
+        }
+
+        if (showResultsSection && !isResultsFadingOut)
+        {
+            var cts = new CancellationTokenSource();
+            resultsFadeCts = cts;
+            _ = TriggerResultsFadeOutAsync(cts);
+        }
+    }
+
+    private async Task TriggerResultsFadeOutAsync(CancellationTokenSource cts)
+    {
+        isResultsFadingOut = true;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            await Task.Delay(300, cts.Token);
+
+            if (!cts.IsCancellationRequested)
+            {
+                showResultsSection = false;
+            }
+        }
+        catch (TaskCanceledException)
+        {
+            // Игнорируем отмену, а состояние обновим ниже
+        }
+        finally
+        {
+            isResultsFadingOut = false;
+            await InvokeAsync(StateHasChanged);
+
+            if (ReferenceEquals(resultsFadeCts, cts))
+            {
+                resultsFadeCts = null;
+            }
+
+            cts.Dispose();
+        }
+    }
+
+    private string GetResultsContainerClasses() =>
+        $"card p-6 transition-all duration-300 ease-out {(isResultsFadingOut ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0")}";
 }
+
+<!-- Client Details Modal -->
+<ClientDetailsModal 
+    IsVisible="@showClientModal" 
+    ClientDetails="@selectedClientDetails" 
+    IsLoading="@isLoadingClientDetails"
+    ErrorMessage="@clientDetailsError"
+    OnClose="@(() => showClientModal = false)"
+    OnEdit="@(() => EditClient(selectedClientId, selectedClientRealm))"
+    OnDelete="@(() => DeleteClient(selectedClientId, selectedClientRealm))"
+    OnCopy="@(() => CopyClient(selectedClientId, selectedClientRealm))"
+    OnRefresh="@(() => LoadClientDetails(selectedClientId, selectedClientRealm))" />
