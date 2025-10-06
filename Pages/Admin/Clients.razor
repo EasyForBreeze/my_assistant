@@ -105,10 +105,10 @@
 
 
 <!-- Search Results -->
-@if (isSearching || (hasSearched && searchResponse != null && !string.IsNullOrWhiteSpace(searchQuery)))
+@if (showResultsSection)
 {
     <div class="animate-stagger">
-        <div class="card p-6" id="admin-search-results-section">
+        <div class="@GetResultsContainerClasses()" id="admin-search-results-section">
         <div class="mb-6">
             <h3 class="text-xl font-semibold text-white">Результаты поиска</h3>
             <!-- Зарезервированное место для информации о результатах -->
@@ -413,6 +413,9 @@ else
     private const int itemsPerPage = 10;
     private bool isTransitioning = false;
     private bool hasSearched = false;
+    private bool showResultsSection = false;
+    private bool isResultsFadingOut = false;
+    private CancellationTokenSource? resultsFadeCts;
 
     protected override async Task OnInitializedAsync()
     {
@@ -466,7 +469,8 @@ else
         progress = null;
         currentPage = 1;
         hasSearched = false;
-        
+
+        UpdateResultsVisibility();
         StateHasChanged();
     }
 
@@ -490,6 +494,7 @@ else
         searchResponse = null;
         progress = null;
         currentPage = 1;
+        UpdateResultsVisibility();
         StateHasChanged();
 
         try
@@ -516,6 +521,7 @@ else
         finally
         {
             isSearching = false;
+            UpdateResultsVisibility();
             StateHasChanged();
         }
     }
@@ -528,6 +534,7 @@ else
         progress = null;
         currentPage = 1;
         hasSearched = false;
+        UpdateResultsVisibility();
         StateHasChanged();
         return Task.CompletedTask;
     }
@@ -552,6 +559,8 @@ else
 
     public void Dispose()
     {
+        resultsFadeCts?.Cancel();
+        resultsFadeCts?.Dispose();
         // Ничего не нужно освобождать
     }
 
@@ -598,4 +607,68 @@ else
             _ => "минут"
         };
     }
+
+    private bool ShouldDisplayResultsSection() =>
+        isSearching || (hasSearched && searchResponse != null && !string.IsNullOrWhiteSpace(searchQuery));
+
+    private void UpdateResultsVisibility()
+    {
+        var shouldShow = ShouldDisplayResultsSection();
+
+        if (shouldShow)
+        {
+            resultsFadeCts?.Cancel();
+
+            if (!showResultsSection || isResultsFadingOut)
+            {
+                showResultsSection = true;
+                isResultsFadingOut = false;
+                InvokeAsync(StateHasChanged);
+            }
+
+            return;
+        }
+
+        if (showResultsSection && !isResultsFadingOut)
+        {
+            var cts = new CancellationTokenSource();
+            resultsFadeCts = cts;
+            _ = TriggerResultsFadeOutAsync(cts);
+        }
+    }
+
+    private async Task TriggerResultsFadeOutAsync(CancellationTokenSource cts)
+    {
+        isResultsFadingOut = true;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            await Task.Delay(300, cts.Token);
+
+            if (!cts.IsCancellationRequested)
+            {
+                showResultsSection = false;
+            }
+        }
+        catch (TaskCanceledException)
+        {
+            // Игнорируем отмену, а состояние обновим ниже
+        }
+        finally
+        {
+            isResultsFadingOut = false;
+            await InvokeAsync(StateHasChanged);
+
+            if (ReferenceEquals(resultsFadeCts, cts))
+            {
+                resultsFadeCts = null;
+            }
+
+            cts.Dispose();
+        }
+    }
+
+    private string GetResultsContainerClasses() =>
+        $"card p-6 transition-all duration-300 ease-out {(isResultsFadingOut ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0")}";
 }
