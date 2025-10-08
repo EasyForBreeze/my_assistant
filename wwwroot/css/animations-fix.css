@@ -1,0 +1,90 @@
+/* КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Удаляем scale() из ВСЕХ анимаций */
+/* Этот файл перезаписывает анимации, которые вызывают изменение размера при появлении скролла */
+
+/* Исправление plasmaWave1 - БЕЗ scale() */
+@keyframes plasmaWave1 {
+  0%, 100% {
+    transform: rotate(0deg);
+    opacity: 0.8;
+  }
+  25% {
+    transform: rotate(90deg);
+    opacity: 0.6;
+  }
+  50% {
+    transform: rotate(180deg);
+    opacity: 0.9;
+  }
+  75% {
+    transform: rotate(270deg);
+    opacity: 0.7;
+  }
+}
+
+/* Исправление plasmaWave2 - БЕЗ scale() */
+@keyframes plasmaWave2 {
+  0%, 100% {
+    transform: rotate(0deg);
+    opacity: 0.6;
+  }
+  25% {
+    transform: rotate(90deg);
+    opacity: 0.8;
+  }
+  50% {
+    transform: rotate(180deg);
+    opacity: 0.5;
+  }
+  75% {
+    transform: rotate(270deg);
+    opacity: 0.7;
+  }
+}
+
+/* Исправление geometricSpin - БЕЗ scale() */
+@keyframes geometricSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Исправление geometricFloat - БЕЗ scale() */
+@keyframes geometricFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-20px) rotate(90deg);
+  }
+  50% {
+    transform: translateY(-40px) rotate(180deg);
+  }
+  75% {
+    transform: translateY(-20px) rotate(270deg);
+  }
+}
+
+/* Исправление geometricPulse - БЕЗ scale() */
+@keyframes geometricPulse {
+  0%, 100% {
+    transform: rotate(0deg);
+    opacity: 0.7;
+  }
+  50% {
+    transform: rotate(180deg);
+    opacity: 1;
+  }
+}
+

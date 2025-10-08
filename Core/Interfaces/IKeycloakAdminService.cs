@@ -60,6 +60,26 @@ public interface IKeycloakAdminService
     /// Получить список всех реалмов (кроме master).
     /// </summary>
     Task<IEnumerable<string>> GetRealmsListAsync(CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Получить детальную информацию о клиенте.
+    /// </summary>
+    Task<ClientDetailsDto?> GetClientDetailsAsync(string clientId, string realm, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Получить события клиента.
+    /// </summary>
+    Task<IEnumerable<ClientEventDto>> GetClientEventsAsync(string clientId, string realm, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Получить роли клиента (локальные и сервисные).
+    /// </summary>
+    Task<(List<string> LocalRoles, List<string> ServiceRoles)> GetClientRolesAsync(string clientId, string realm, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Получить эндпоинты клиента.
+    /// </summary>
+    Task<List<string>> GetClientEndpointsAsync(string clientId, string realm, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

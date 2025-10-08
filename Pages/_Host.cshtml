@@ -13,6 +13,9 @@
     <!-- Tailwind CSS -->
     <link href="~/css/tailwind.css" rel="stylesheet" />
     
+    <!-- Animation Fix CSS - Override broken scale() in animations -->
+    <link href="~/css/animations-fix.css" rel="stylesheet" />
+    
     <!-- Custom Scrollbar CSS -->
     <link href="~/css/scrollbar.css" rel="stylesheet" />
     
@@ -46,6 +49,41 @@
     
            <!-- Enhanced Navigation Script -->
            <script>
+               // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Фиксируем ширину ВСЕХ контейнеров анимации
+               function fixAnimationContainerWidth() {
+                   // Получаем МАКСИМАЛЬНУЮ ширину viewport (с учетом возможного скроллбара)
+                   const viewportWidth = Math.max(
+                       document.documentElement.clientWidth,
+                       window.innerWidth || 0
+                   );
+                   
+                   // Находим ВСЕ контейнеры с фоновой анимацией
+                   const containers = [
+                       document.getElementById('main-floating-background'),
+                       ...document.querySelectorAll('.fixed.inset-0.overflow-hidden.pointer-events-none.z-0')
+                   ].filter(el => el !== null);
+                   
+                   console.log(`[Animation Fix] Found ${containers.length} animation containers`);
+                   
+                   containers.forEach((container, index) => {
+                       // Устанавливаем ФИКСИРОВАННУЮ ширину в пикселях
+                       container.style.width = viewportWidth + 'px';
+                       container.style.maxWidth = viewportWidth + 'px';
+                       container.style.left = '0';
+                       container.style.right = 'auto';
+                       
+                       console.log(`[Animation Fix] Container ${index + 1} width fixed to ${viewportWidth}px`);
+                   });
+               }
+               
+               // Вызываем при загрузке DOM
+               document.addEventListener('DOMContentLoaded', fixAnimationContainerWidth);
+               
+               // Вызываем после каждого Blazor рендера
+               if (typeof Blazor !== 'undefined') {
+                   Blazor.addEventListener('enhancedload', fixAnimationContainerWidth);
+               }
+               
                // Настройка плавных переходов
                Blazor.addEventListener('enhancedload', function () {
                    // Добавляем класс для плавного появления
@@ -90,6 +128,14 @@
                        });
                    }, 50);
                });
+               
+               // Функция для переключения видимости пароля
+               window.togglePasswordVisibility = function(inputId) {
+                   const input = document.getElementById(inputId);
+                   if (input) {
+                       input.type = input.type === 'password' ? 'text' : 'password';
+                   }
+               };
            </script>
 </body>
 </html>

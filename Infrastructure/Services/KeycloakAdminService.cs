@@ -225,6 +225,117 @@ public class KeycloakAdminService : IKeycloakAdminService
         // TODO: Реализовать перегенерацию секрета клиента
         throw new NotImplementedException("Метод RegenerateClientSecretAsync называется позже");
     }
+    
+    public async Task<ClientDetailsDto?> GetClientDetailsAsync(string clientId, string realm, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // TODO: Реализовать получение полной информации о клиенте из Keycloak
+            // Пока возвращаем заглушку
+            _logger.LogInformation("Получение деталей клиента {ClientId} в реалме {Realm}", clientId, realm);
+            
+            await Task.Delay(100, cancellationToken); // Имитация запроса
+            
+            return new ClientDetailsDto
+            {
+                Id = Guid.NewGuid().ToString(),
+                ClientId = clientId,
+                Name = $"Client {clientId}",
+                Description = "Детальное описание клиента (заглушка)",
+                Enabled = true,
+                Protocol = "openid-connect",
+                ClientType = "confidential",
+                AccessType = "confidential",
+                RootUrl = "https://example.com",
+                BaseUrl = "/",
+                AdminUrl = "https://example.com/admin",
+                RedirectUris = new List<string> { "https://example.com/*" },
+                WebOrigins = new List<string> { "https://example.com" },
+                ServiceAccountsEnabled = true,
+                AuthorizationServicesEnabled = false,
+                
+                // Capability config
+                ClientAuthentication = true,
+                StandardFlow = true,
+                ServiceAccountsRoles = false,
+                
+                ClientSecret = "***secret***",
+                LocalRoles = new List<string> { "admin", "user" },
+                ServiceRoles = new List<string> { "service-account" },
+                Endpoints = new List<string> 
+                { 
+                    $"https://auth.local/realms/{realm}/protocol/openid-connect/token",
+                    $"https://auth.local/realms/{realm}/protocol/openid-connect/auth"
+                },
+                Events = new List<ClientEventDto>(),
+                Realm = realm,
+                CreatedAt = DateTime.UtcNow.AddDays(-30),
+                UpdatedAt = DateTime.UtcNow.AddDays(-1),
+                Attributes = new Dictionary<string, object>()
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении деталей клиента {ClientId} в реалме {Realm}", clientId, realm);
+            return null;
+        }
+    }
+    
+    public async Task<IEnumerable<ClientEventDto>> GetClientEventsAsync(string clientId, string realm, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // TODO: Реализовать получение событий клиента из Keycloak
+            _logger.LogInformation("Получение событий клиента {ClientId} в реалме {Realm}", clientId, realm);
+            
+            await Task.CompletedTask;
+            return new List<ClientEventDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении событий клиента {ClientId} в реалме {Realm}", clientId, realm);
+            throw;
+        }
+    }
+    
+    public async Task<(List<string> LocalRoles, List<string> ServiceRoles)> GetClientRolesAsync(string clientId, string realm, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // TODO: Реализовать получение ролей клиента из Keycloak
+            _logger.LogInformation("Получение ролей клиента {ClientId} в реалме {Realm}", clientId, realm);
+            
+            await Task.CompletedTask;
+            return (new List<string>(), new List<string>());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении ролей клиента {ClientId} в реалме {Realm}", clientId, realm);
+            throw;
+        }
+    }
+    
+    public async Task<List<string>> GetClientEndpointsAsync(string clientId, string realm, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // TODO: Реализовать получение эндпоинтов клиента
+            _logger.LogInformation("Получение эндпоинтов клиента {ClientId} в реалме {Realm}", clientId, realm);
+            
+            await Task.CompletedTask;
+            return new List<string>
+            {
+                $"https://auth.local/realms/{realm}/protocol/openid-connect/token",
+                $"https://auth.local/realms/{realm}/protocol/openid-connect/auth",
+                $"https://auth.local/realms/{realm}/protocol/openid-connect/userinfo"
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении эндпоинтов клиента {ClientId} в реалме {Realm}", clientId, realm);
+            throw;
+        }
+    }
 
     #endregion
 }

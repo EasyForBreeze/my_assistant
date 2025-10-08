@@ -2834,9 +2834,10 @@ table[style*="table-layout: fixed"] td[style*="width"] {
   width: inherit !important;
 }
          
-         .animate-geometric-spin {
+         /* ВРЕМЕННО ЗАКОММЕНТИРОВАНО ДЛЯ ТЕСТИРОВАНИЯ */
+         /* .animate-geometric-spin {
            animation: geometricSpin 25s linear infinite;
-         }
+         } */
 
 /* Enhanced fixed table layout for consistent column widths */
 table[style*="table-layout: fixed"] {
@@ -5296,7 +5297,7 @@ table[style*="table-layout: fixed"] td[style*="width"] {
   
   @keyframes geometricSpin {
     0% {
-      transform: rotate(0deg) scale(1);
+      transform: rotate(0deg);
     }
 
 /* Enhanced fixed table layout for consistent column widths */
@@ -5333,7 +5334,7 @@ table[style*="table-layout: fixed"] td[style*="width"] {
   width: inherit !important;
 }
     25% {
-      transform: rotate(90deg) scale(1.2);
+      transform: rotate(90deg);
     }
 
 /* Enhanced fixed table layout for consistent column widths */
@@ -5370,7 +5371,7 @@ table[style*="table-layout: fixed"] td[style*="width"] {
   width: inherit !important;
 }
     50% {
-      transform: rotate(180deg) scale(1);
+      transform: rotate(180deg);
     }
 
 /* Enhanced fixed table layout for consistent column widths */
@@ -5444,7 +5445,7 @@ table[style*="table-layout: fixed"] td[style*="width"] {
   width: inherit !important;
 }
     100% {
-      transform: rotate(360deg) scale(1);
+      transform: rotate(360deg);
     }
 
 /* Enhanced fixed table layout for consistent column widths */

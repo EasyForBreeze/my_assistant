@@ -1,0 +1,928 @@
+@page "/admin/clients/{realm}/{clientId}"
+@using new_assistant.Core.Interfaces
+@using new_assistant.Core.DTOs
+@using Microsoft.AspNetCore.Authorization
+@inject IUserRoleService UserRoleService
+@inject IKeycloakAdminService KeycloakAdminService
+@inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IJSRuntime JSRuntime
+
+<PageTitle>@(clientDetails?.Name ?? "Клиент") - KeyCloak Assistant</PageTitle>
+
+@{
+    var isAuthenticated = HttpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true;
+    
+    if (!isAuthenticated)
+    {
+        Navigation.NavigateTo("/api/auth/login", forceLoad: true);
+        return;
+    }
+    
+    if (!UserRoleService.IsAdmin())
+    {
+        Navigation.NavigateTo("/", forceLoad: true);
+        return;
+    }
+}
+
+    <div class="min-h-screen animate-content-fade-in">
+    <!-- Компактный Header -->
+    <div class="mb-6">
+        <div class="glass rounded-xl p-4 border border-gray-700/50">
+            <div class="flex items-center justify-between flex-wrap gap-3">
+                <div class="flex items-center space-x-3">
+                    <!-- Кнопка "Назад" -->
+                    <button @onclick="NavigateBack" 
+                            class="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600/50 transition-colors">
+                        <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- Иконка клиента -->
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">
+                            @(clientDetails?.Name ?? "Загрузка...")
+                        </h1>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <span class="px-2 py-1 bg-blue-500/20 text-blue-300 rounded text-xs font-mono">@ClientId</span>
+                            <span class="px-2 py-1 bg-purple-500/20 text-purple-300 rounded text-xs">@Realm</span>
+                            @if (clientDetails?.Enabled == true)
+                            {
+                                <span class="px-2 py-1 bg-green-500/20 text-green-300 rounded text-xs flex items-center space-x-1">
+                                    <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+                                    <span>Активен</span>
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="px-2 py-1 bg-red-500/20 text-red-300 rounded text-xs flex items-center space-x-1">
+                                    <span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                                    <span>Отключен</span>
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Кнопки действий -->
+                <div class="flex items-center space-x-2">
+                    <button @onclick="RefreshData" 
+                            disabled="@isLoading"
+                            class="px-3 py-2 bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm disabled:opacity-50">
+                        <svg class="w-4 h-4 @(isLoading ? "animate-spin" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        <span>Обновить</span>
+                    </button>
+                    
+                    <button @onclick="SaveChanges" 
+                            class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                        </svg>
+                        <span>Сохранить</span>
+                    </button>
+                    
+                    <button @onclick="DeleteClient" 
+                            class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        <span>Удалить</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <!-- Loading State -->
+        <div class="flex flex-col items-center justify-center py-20 space-y-4">
+            <div class="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+            <p class="text-gray-400 text-lg">Загрузка деталей клиента...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <!-- Error State -->
+        <div class="glass rounded-2xl p-8">
+            <div class="flex flex-col items-center justify-center space-y-4">
+                <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
+                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <p class="text-red-400 text-lg">@errorMessage</p>
+                <button @onclick="RefreshData" 
+                        class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                    Повторить попытку
+                </button>
+            </div>
+        </div>
+    }
+    else if (clientDetails != null)
+    {
+        <!-- Компактные вкладки -->
+        <div class="glass rounded-t-xl border-b border-gray-700/50 overflow-x-auto">
+            <nav class="flex space-x-1 p-2">
+                <button @onclick="SelectSettingsTab" 
+                        class="@GetTabClass("settings")">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <span class="text-sm font-medium">Settings</span>
+                    </div>
+                </button>
+                
+                <button @onclick="SelectCredentialsTab" 
+                        class="@GetTabClass("credentials")">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1721 9z"></path>
+                        </svg>
+                        <span class="text-sm font-medium">Credentials</span>
+                    </div>
+                </button>
+                
+                <button @onclick="SelectRolesTab" 
+                        class="@GetTabClass("roles")">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        <span class="text-sm font-medium">Roles</span>
+                    </div>
+                </button>
+                
+                <button @onclick="SelectEndpointsTab" 
+                        class="@GetTabClass("endpoints")">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <span class="text-sm font-medium">Endpoints</span>
+                    </div>
+                </button>
+                
+                <button @onclick="SelectEventsTab" 
+                        class="@GetTabClass("events")">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-sm font-medium">Events</span>
+                    </div>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="glass rounded-b-xl p-4 animate-content-fade-in">
+            @if (activeTab == "settings")
+            {
+                <div class="space-y-6">
+                    <!-- General Settings -->
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-2 pb-3 border-b border-gray-700/50">
+                            <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <h2 class="text-lg font-semibold text-white">
+                                General Settings
+                            </h2>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Client ID -->
+                            <div class="space-y-1">
+                                <label class="block text-sm font-medium text-gray-300">Client ID</label>
+                                <input type="text" 
+                                       value="@clientDetails.ClientId" 
+                                       readonly
+                                       class="w-full bg-gray-800/50 text-gray-300 font-mono px-3 py-2 rounded-lg border border-gray-600/50 cursor-not-allowed text-sm" />
+                                <p class="text-xs text-gray-500">Уникальный идентификатор</p>
+                            </div>
+                            
+                            <!-- Name -->
+                            <div class="space-y-1">
+                                <label class="block text-sm font-medium text-gray-300">Name</label>
+                                <input type="text" 
+                                       @bind="clientDetails.Name"
+                                       class="w-full bg-gray-800/50 text-white px-3 py-2 rounded-lg border border-gray-600/50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm" />
+                                <p class="text-xs text-gray-500">Отображаемое имя</p>
+                            </div>
+                            
+                            <!-- Description -->
+                            <div class="md:col-span-2 space-y-1">
+                                <label class="block text-sm font-medium text-gray-300">Description</label>
+                                <textarea @bind="clientDetails.Description"
+                                          rows="3"
+                                          placeholder="Опишите назначение клиента..."
+                                          class="w-full bg-gray-800/50 text-white px-3 py-2 rounded-lg border border-gray-600/50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none text-sm"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Capability Config -->
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-2 pb-3 border-b border-gray-700/50">
+                            <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                </svg>
+                            </div>
+                            <h2 class="text-lg font-semibold text-white">
+                                Capability Config
+                            </h2>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Client Authentication -->
+                            <div class="bg-gray-800/30 rounded-lg p-3 border border-gray-700/50">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-2">
+                                        <svg class="w-4 h-4 @(clientDetails.ClientAuthentication ? "text-green-400" : "text-gray-500")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                        </svg>
+                                        <span class="text-sm font-medium text-white">Client Authentication</span>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" 
+                                               @bind="clientDetails.ClientAuthentication"
+                                               class="sr-only peer" />
+                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-1">Требовать аутентификацию клиента</p>
+                            </div>
+                            
+                            <!-- Standard Flow -->
+                            <div class="bg-gray-800/30 rounded-lg p-3 border border-gray-700/50">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-2">
+                                        <svg class="w-4 h-4 @(clientDetails.StandardFlow ? "text-green-400" : "text-gray-500")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                        </svg>
+                                        <span class="text-sm font-medium text-white">Standard Flow</span>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" 
+                                               @bind="clientDetails.StandardFlow"
+                                               class="sr-only peer" />
+                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-1">Разрешить стандартный OIDC flow</p>
+                            </div>
+                            
+                            <!-- Service Accounts Roles -->
+                            <div class="bg-gray-800/30 rounded-lg p-3 border border-gray-700/50">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-2">
+                                        <svg class="w-4 h-4 @(clientDetails.ServiceAccountsRoles ? "text-green-400" : "text-gray-500")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                        </svg>
+                                        <span class="text-sm font-medium text-white">Service Accounts Roles</span>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" 
+                                               @bind="clientDetails.ServiceAccountsRoles"
+                                               class="sr-only peer" />
+                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-1">Включить роли для service accounts</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Access Settings -->
+                    <div class="space-y-6 relative">
+                        <!-- Декоративный градиент -->
+                        <div class="absolute -inset-4 bg-gradient-to-r from-purple-600/5 via-pink-600/5 to-red-600/5 rounded-3xl blur-2xl"></div>
+                        
+                        <div class="relative">
+                            <div class="flex items-center space-x-3 pb-4 border-b-2 border-gradient-to-r from-purple-500 via-pink-500 to-red-500">
+                                <div class="w-12 h-12 bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30 animate-glow-pulse">
+                                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                    </svg>
+                                </div>
+                                <h2 class="text-2xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 bg-clip-text text-transparent">
+                                    Access Settings
+                                </h2>
+                            </div>
+                        </div>
+                        
+                        <div class="relative grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-semibold text-gray-300 flex items-center space-x-2">
+                                    <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                    <span>Client Type</span>
+                                </label>
+                                <select @bind="clientDetails.ClientType"
+                                        class="w-full input-premium">
+                                    <option value="public">Public</option>
+                                    <option value="confidential">Confidential</option>
+                                    <option value="bearer-only">Bearer-only</option>
+                                </select>
+                                <p class="text-xs text-gray-500">Тип аутентификации клиента</p>
+                            </div>
+                            
+                            <div class="space-y-2">
+                                <label class="block text-sm font-semibold text-gray-300 flex items-center space-x-2">
+                                    <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                    <span>Protocol</span>
+                                </label>
+                                <div class="flex items-center space-x-3 bg-gradient-to-r from-purple-500/10 to-pink-500/10 px-5 py-4 rounded-xl border-2 border-purple-500/30 shadow-lg shadow-purple-500/10 hover:shadow-purple-500/20 transition-all duration-300">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center shadow-lg">
+                                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                        </svg>
+                                    </div>
+                                    <span class="text-white font-mono text-lg font-semibold">@clientDetails.Protocol</span>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-2">
+                                <label class="block text-sm font-semibold text-gray-300 mb-3">Service Accounts</label>
+                                <div class="flex items-center justify-between card-premium">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 @(clientDetails.ServiceAccountsEnabled ? "bg-green-500/20" : "bg-gray-700") rounded-lg flex items-center justify-center transition-all duration-300">
+                                            <svg class="w-6 h-6 @(clientDetails.ServiceAccountsEnabled ? "text-green-400" : "text-gray-500")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                            </svg>
+                                        </div>
+                                        <span class="text-white font-medium">Service Accounts Enabled</span>
+                                    </div>
+                                    <div class="toggle-switch">
+                                        <input type="checkbox" 
+                                               @bind="clientDetails.ServiceAccountsEnabled"
+                                               id="service-accounts-toggle" />
+                                        <label for="service-accounts-toggle" class="toggle-slider"></label>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500">Разрешить клиенту аутентифицироваться для получения токена</p>
+                            </div>
+                            
+                            <div class="space-y-2">
+                                <label class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-gray-300">Authorization Services</span>
+                                    <div class="relative">
+                                        <input type="checkbox" 
+                                               @bind="clientDetails.AuthorizationServicesEnabled"
+                                               class="sr-only peer" />
+                                        <div class="w-14 h-8 bg-gray-700 rounded-full peer-checked:bg-green-600 transition-colors cursor-pointer"></div>
+                                        <div class="absolute left-1 top-1 w-6 h-6 bg-white rounded-full transition-transform peer-checked:translate-x-6 cursor-pointer"></div>
+                                    </div>
+                                </label>
+                                <p class="text-xs text-gray-500">Включить тонкую настройку авторизации</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Login Settings -->
+                    <div class="space-y-4">
+                        <h2 class="text-xl font-semibold text-white flex items-center space-x-2 pb-3 border-b border-gray-700/50">
+                            <div class="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                </svg>
+                            </div>
+                            <span>Login Settings</span>
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-300">Root URL</label>
+                                <input type="text" 
+                                       @bind="clientDetails.RootUrl"
+                                       placeholder="https://example.com"
+                                       class="w-full bg-gray-800/50 text-white font-mono px-4 py-3 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 transition-colors" />
+                            </div>
+                            
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-300">Base URL</label>
+                                <input type="text" 
+                                       @bind="clientDetails.BaseUrl"
+                                       placeholder="/"
+                                       class="w-full bg-gray-800/50 text-white font-mono px-4 py-3 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 transition-colors" />
+                            </div>
+                            
+                            <div class="md:col-span-2 space-y-2">
+                                <label class="block text-sm font-medium text-gray-300">Admin URL</label>
+                                <input type="text" 
+                                       @bind="clientDetails.AdminUrl"
+                                       placeholder="https://example.com/admin"
+                                       class="w-full bg-gray-800/50 text-white font-mono px-4 py-3 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 transition-colors" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Redirect URIs -->
+                    <div class="space-y-4">
+                        <h2 class="text-xl font-semibold text-white flex items-center space-x-2 pb-3 border-b border-gray-700/50">
+                            <div class="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
+                            </div>
+                            <span>Valid Redirect URIs</span>
+                        </h2>
+                        
+                        <div class="space-y-3">
+                            @for (int i = 0; i < clientDetails.RedirectUris.Count; i++)
+                            {
+                                var index = i;
+                                <div class="flex items-center space-x-2">
+                                    <input type="text" 
+                                           value="@clientDetails.RedirectUris[index]"
+                                           @onchange="@(e => UpdateRedirectUri(index, e.Value?.ToString() ?? ""))"
+                                           placeholder="https://example.com/*"
+                                           class="flex-1 bg-gray-800/50 text-white font-mono px-4 py-3 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 transition-colors" />
+                                    <button @onclick="@(() => RemoveRedirectUri(index))" 
+                                            class="p-3 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            }
+                            
+                            <button @onclick="AddRedirectUri" 
+                                    class="btn-premium w-full flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                <span>+ Добавить Redirect URI</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Web Origins -->
+                    <div class="space-y-4">
+                        <h2 class="text-xl font-semibold text-white flex items-center space-x-2 pb-3 border-b border-gray-700/50">
+                            <div class="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+                                </svg>
+                            </div>
+                            <span>Web Origins</span>
+                        </h2>
+                        
+                        <div class="space-y-3">
+                            @for (int i = 0; i < clientDetails.WebOrigins.Count; i++)
+                            {
+                                var index = i;
+                                <div class="flex items-center space-x-2">
+                                    <input type="text" 
+                                           value="@clientDetails.WebOrigins[index]"
+                                           @onchange="@(e => UpdateWebOrigin(index, e.Value?.ToString() ?? ""))"
+                                           placeholder="https://example.com"
+                                           class="flex-1 bg-gray-800/50 text-white font-mono px-4 py-3 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 transition-colors" />
+                                    <button @onclick="@(() => RemoveWebOrigin(index))" 
+                                            class="p-3 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            }
+                            
+                            <button @onclick="AddWebOrigin" 
+                                    class="w-full px-4 py-3 border-2 border-dashed border-gray-700 hover:border-blue-500 text-gray-400 hover:text-blue-400 rounded-lg transition-colors flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                <span>Добавить Web Origin</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (activeTab == "credentials")
+            {
+                <div class="space-y-6">
+                    <h2 class="text-xl font-semibold text-white flex items-center space-x-2 pb-3 border-b border-gray-700/50">
+                        <div class="w-8 h-8 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1721 9z"></path>
+                            </svg>
+                        </div>
+                        <span>Client Authenticator</span>
+                    </h2>
+                    
+                    @if (!string.IsNullOrEmpty(clientDetails.ClientSecret))
+                    {
+                        <div class="glass rounded-xl p-6 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-white">Client Secret</h3>
+                                <button @onclick="RegenerateSecret" 
+                                        class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors text-sm flex items-center space-x-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    </svg>
+                                    <span>Regenerate</span>
+                                </button>
+                            </div>
+                            
+                            <div class="flex items-center space-x-2">
+                                <input type="password" 
+                                       id="clientSecret"
+                                       value="@clientDetails.ClientSecret" 
+                                       readonly
+                                       class="flex-1 bg-gray-800/50 text-white font-mono px-4 py-3 rounded-lg border border-gray-700 focus:outline-none" />
+                                
+                                <button @onclick="ToggleSecretVisibility" 
+                                        class="p-3 glass hover:bg-gray-700/50 text-gray-300 rounded-lg transition-colors"
+                                        title="Показать/Скрыть">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </button>
+                                
+                                <button @onclick="@(() => CopyToClipboard(clientDetails.ClientSecret))" 
+                                        class="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                                        title="Копировать">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                                <div class="flex items-start space-x-3">
+                                    <svg class="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                    </svg>
+                                    <div>
+                                        <p class="text-yellow-300 text-sm font-medium">Важно!</p>
+                                        <p class="text-yellow-200/80 text-sm mt-1">Храните Client Secret в безопасности. Не передавайте его третьим лицам.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="glass rounded-xl p-8 text-center">
+                            <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                            <p class="text-gray-400">Client Secret не настроен для публичных клиентов</p>
+                        </div>
+                    }
+                </div>
+            }
+            else if (activeTab == "roles")
+            {
+                <div class="space-y-6">
+                    <!-- Local Roles -->
+                    <div class="space-y-4">
+                        <h2 class="text-xl font-semibold text-white flex items-center space-x-2 pb-3 border-b border-gray-700/50">
+                            <div class="w-8 h-8 bg-gradient-to-br from-pink-500 to-rose-600 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                            </div>
+                            <span>Local Roles</span>
+                        </h2>
+                        
+                        @if (clientDetails.LocalRoles.Any())
+                        {
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                @foreach (var role in clientDetails.LocalRoles)
+                                {
+                                    <div class="glass rounded-lg p-4 flex items-center justify-between group hover:bg-gray-700/30 transition-colors">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                                </svg>
+                                            </div>
+                                            <span class="text-white font-medium">@role</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="glass rounded-xl p-8 text-center">
+                                <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                                <p class="text-gray-400">Локальные роли не настроены</p>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Service Roles -->
+                    @if (clientDetails.ServiceAccountsEnabled && clientDetails.ServiceRoles.Any())
+                    {
+                        <div class="space-y-4">
+                            <h2 class="text-xl font-semibold text-white flex items-center space-x-2 pb-3 border-b border-gray-700/50">
+                                <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                </div>
+                                <span>Service Account Roles</span>
+                            </h2>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                @foreach (var role in clientDetails.ServiceRoles)
+                                {
+                                    <div class="glass rounded-lg p-4 flex items-center justify-between group hover:bg-gray-700/30 transition-colors">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                                </svg>
+                                            </div>
+                                            <span class="text-white font-medium">@role</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else if (activeTab == "endpoints")
+            {
+                <div class="space-y-6">
+                    <h2 class="text-xl font-semibold text-white flex items-center space-x-2 pb-3 border-b border-gray-700/50">
+                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <span>OpenID Connect Endpoints</span>
+                    </h2>
+                    
+                    @if (clientDetails.Endpoints.Any())
+                    {
+                        <div class="space-y-3">
+                            @foreach (var endpoint in clientDetails.Endpoints)
+                            {
+                                <div class="glass rounded-lg p-4 group hover:bg-gray-700/30 transition-colors">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex-1 mr-4">
+                                            <p class="text-white font-mono text-sm break-all">@endpoint</p>
+                                        </div>
+                                        <button @onclick="@(() => CopyToClipboard(endpoint))" 
+                                                class="p-2 opacity-0 group-hover:opacity-100 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg transition-all flex-shrink-0"
+                                                title="Копировать">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="glass rounded-xl p-8 text-center">
+                            <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <p class="text-gray-400">Эндпоинты не найдены</p>
+                        </div>
+                    }
+                </div>
+            }
+            else if (activeTab == "events")
+            {
+                <div class="space-y-6">
+                    <h2 class="text-xl font-semibold text-white flex items-center space-x-2 pb-3 border-b border-gray-700/50">
+                        <div class="w-8 h-8 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <span>Client Events</span>
+                    </h2>
+                    
+                    @if (clientDetails.Events.Any())
+                    {
+                        <div class="space-y-3">
+                            @foreach (var evt in clientDetails.Events)
+                            {
+                                <div class="glass rounded-lg p-4">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex-1">
+                                            <div class="flex items-center space-x-3 mb-2">
+                                                <span class="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm font-medium">@evt.Type</span>
+                                                <span class="text-gray-400 text-sm">@evt.Time.ToString("dd.MM.yyyy HH:mm:ss")</span>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(evt.Details))
+                                            {
+                                                <p class="text-gray-300 text-sm">@evt.Details</p>
+                                            }
+                                            @if (!string.IsNullOrEmpty(evt.IpAddress))
+                                            {
+                                                <p class="text-gray-500 text-xs mt-1">IP: @evt.IpAddress</p>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="glass rounded-xl p-8 text-center">
+                            <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p class="text-gray-400">События клиента не найдены</p>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Realm { get; set; } = string.Empty;
+    [Parameter] public string ClientId { get; set; } = string.Empty;
+    
+    private ClientDetailsDto? clientDetails;
+    private bool isLoading = true;
+    private string? errorMessage;
+    private string activeTab = "settings";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadClientDetails();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(Realm) && !string.IsNullOrEmpty(ClientId))
+        {
+            await LoadClientDetails();
+        }
+    }
+
+    private async Task LoadClientDetails()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+            StateHasChanged();
+            
+            clientDetails = await KeycloakAdminService.GetClientDetailsAsync(ClientId, Realm);
+            
+            if (clientDetails == null)
+            {
+                errorMessage = "Не удалось загрузить детали клиента";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ошибка при загрузке деталей: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadClientDetails();
+    }
+
+    private Task SaveChanges()
+    {
+        // TODO: Реализовать сохранение изменений
+        return Task.CompletedTask;
+    }
+
+    private Task DeleteClient()
+    {
+        // TODO: Реализовать удаление клиента
+        return Task.CompletedTask;
+    }
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/admin/clients");
+    }
+
+    // Tab selection methods
+    private void SelectSettingsTab() => activeTab = "settings";
+    private void SelectCredentialsTab() => activeTab = "credentials";
+    private void SelectRolesTab() => activeTab = "roles";
+    private void SelectEndpointsTab() => activeTab = "endpoints";
+    private void SelectEventsTab() => activeTab = "events";
+
+    private string GetTabClass(string tabName)
+    {
+        var baseClass = "px-3 py-2 rounded-lg transition-all duration-200";
+        var activeClass = "bg-blue-600 text-white shadow-md";
+        var inactiveClass = "text-gray-400 hover:text-white hover:bg-gray-700/50";
+        
+        return $"{baseClass} {(activeTab == tabName ? activeClass : inactiveClass)}";
+    }
+
+    private async Task ToggleSecretVisibility()
+    {
+        await JSRuntime.InvokeVoidAsync("togglePasswordVisibility", "clientSecret");
+    }
+
+    private async Task CopyToClipboard(string text)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        }
+        catch (Exception)
+        {
+            // Fallback
+        }
+    }
+    
+    private Task RegenerateSecret()
+    {
+        // TODO: Реализовать регенерацию секрета
+        return Task.CompletedTask;
+    }
+    
+    private void AddRedirectUri()
+    {
+        if (clientDetails != null)
+        {
+            clientDetails.RedirectUris.Add("");
+            StateHasChanged();
+        }
+    }
+
+    private void RemoveRedirectUri(int index)
+    {
+        if (clientDetails != null && index >= 0 && index < clientDetails.RedirectUris.Count)
+        {
+            clientDetails.RedirectUris.RemoveAt(index);
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateRedirectUri(int index, string value)
+    {
+        if (clientDetails != null && index >= 0 && index < clientDetails.RedirectUris.Count)
+        {
+            clientDetails.RedirectUris[index] = value;
+        }
+    }
+
+    private void AddWebOrigin()
+    {
+        if (clientDetails != null)
+        {
+            clientDetails.WebOrigins.Add("");
+            StateHasChanged();
+        }
+    }
+
+    private void RemoveWebOrigin(int index)
+    {
+        if (clientDetails != null && index >= 0 && index < clientDetails.WebOrigins.Count)
+        {
+            clientDetails.WebOrigins.RemoveAt(index);
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateWebOrigin(int index, string value)
+    {
+        if (clientDetails != null && index >= 0 && index < clientDetails.WebOrigins.Count)
+        {
+            clientDetails.WebOrigins[index] = value;
+        }
+    }
+}
