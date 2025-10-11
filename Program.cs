@@ -112,6 +112,7 @@ builder.Services.AddScoped<IKeycloakAdminService, KeycloakAdminService>();
 // builder.Services.AddScoped<IClientManagementService, ClientManagementService>();
 // builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IUserRoleService, UserRoleService>();
+builder.Services.AddScoped<ISearchStateService, SearchStateService>();
 
 // Настройка MediatR для CQRS
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));

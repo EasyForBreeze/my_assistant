@@ -19,6 +19,7 @@ public class ClientDetailsDto
     public List<string> RedirectUris { get; set; } = new();
     public List<string> WebOrigins { get; set; } = new();
     public bool ServiceAccountsEnabled { get; set; } = false;
+    public bool StandardFlowEnabled { get; set; } = false;
     public bool AuthorizationServicesEnabled { get; set; } = false;
     
     // Capability config

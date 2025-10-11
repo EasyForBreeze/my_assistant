@@ -197,6 +197,360 @@ public class KeycloakHttpClient
     }
 
     /// <summary>
+    /// Получение полной информации о клиенте по clientId
+    /// </summary>
+    public async Task<JsonElement?> GetClientFullInfoAsync(string realm, string clientId, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            var token = await GetAdminTokenAsync(cancellationToken);
+            
+            // Сначала получаем список клиентов с фильтром по clientId
+            var endpoint = $"/admin/realms/{realm}/clients?clientId={System.Net.WebUtility.UrlEncode(clientId)}";
+            
+            _logger.LogInformation("Получение полной информации о клиенте {ClientId} в реалме {Realm}", clientId, realm);
+            
+            var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Ошибка получения клиента {ClientId}: {StatusCode}", clientId, response.StatusCode);
+                return null;
+            }
+            
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return null;
+            }
+            
+            // KeyCloak возвращает массив клиентов
+            var clients = JsonSerializer.Deserialize<List<JsonElement>>(content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+            
+            if (clients == null || clients.Count == 0)
+            {
+                _logger.LogWarning("Клиент {ClientId} не найден в реалме {Realm}", clientId, realm);
+                return null;
+            }
+            
+            // Возвращаем первого клиента (должен быть только один с таким clientId)
+            _logger.LogInformation("Полная информация о клиенте {ClientId} успешно получена", clientId);
+            return clients[0];
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении полной информации о клиенте {ClientId} в реалме {Realm}", clientId, realm);
+            return null;
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <summary>
+    /// Получение client secret
+    /// </summary>
+    public async Task<string?> GetClientSecretAsync(string realm, string clientInternalId, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            var token = await GetAdminTokenAsync(cancellationToken);
+            var endpoint = $"/admin/realms/{realm}/clients/{clientInternalId}/client-secret";
+            
+            _logger.LogInformation("Получение client secret для клиента {ClientId} в реалме {Realm}", clientInternalId, realm);
+            
+            var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Ошибка получения client secret: {StatusCode}", response.StatusCode);
+                return null;
+            }
+            
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            var secretJson = JsonSerializer.Deserialize<JsonElement>(content);
+            
+            if (secretJson.TryGetProperty("value", out var secretValue))
+            {
+                return secretValue.GetString();
+            }
+            
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении client secret");
+            return null;
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <summary>
+    /// Регенерация client secret
+    /// </summary>
+    public async Task<string?> RegenerateClientSecretAsync(string realm, string clientInternalId, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            var token = await GetAdminTokenAsync(cancellationToken);
+            var endpoint = $"/admin/realms/{realm}/clients/{clientInternalId}/client-secret";
+            
+            _logger.LogInformation("Регенерация client secret для клиента {ClientId} в реалме {Realm}", clientInternalId, realm);
+            
+            var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Ошибка регенерации client secret: {StatusCode}", response.StatusCode);
+                return null;
+            }
+            
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            var secretJson = JsonSerializer.Deserialize<JsonElement>(content);
+            
+            if (secretJson.TryGetProperty("value", out var secretValue))
+            {
+                var newSecret = secretValue.GetString();
+                _logger.LogInformation("Client secret успешно регенерирован для клиента {ClientId}", clientInternalId);
+                return newSecret;
+            }
+            
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при регенерации client secret");
+            return null;
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+    
+    /// <summary>
+    /// Получение ролей клиента
+    /// </summary>
+    public async Task<List<JsonElement>> GetClientRolesAsync(string realm, string clientInternalId, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            var token = await GetAdminTokenAsync(cancellationToken);
+            var endpoint = $"/admin/realms/{realm}/clients/{clientInternalId}/roles";
+            
+            _logger.LogInformation("Получение ролей клиента {ClientId} в реалме {Realm}", clientInternalId, realm);
+            
+            var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Ошибка получения ролей клиента: {StatusCode}", response.StatusCode);
+                return new List<JsonElement>();
+            }
+            
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            var roles = JsonSerializer.Deserialize<List<JsonElement>>(content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+            
+            return roles ?? new List<JsonElement>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении ролей клиента");
+            return new List<JsonElement>();
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+    
+    /// <summary>
+    /// Получение событий из реалма
+    /// </summary>
+    public async Task<List<JsonElement>> GetRealmEventsAsync(string realm, CancellationToken cancellationToken = default)
+    {
+        return await GetRealmEventsAsync(realm, 100, cancellationToken);
+    }
+
+    /// <summary>
+    /// Получение событий из реалма с указанием количества
+    /// </summary>
+    public async Task<List<JsonElement>> GetRealmEventsAsync(string realm, int maxEvents, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            var token = await GetAdminTokenAsync(cancellationToken);
+            var endpoint = $"/admin/realms/{realm}/events?max={maxEvents}";
+            
+            _logger.LogInformation("Получение событий из реалма {Realm}", realm);
+            
+            var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Ошибка получения событий: {StatusCode}", response.StatusCode);
+                return new List<JsonElement>();
+            }
+            
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            var events = JsonSerializer.Deserialize<List<JsonElement>>(content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+            
+            return events ?? new List<JsonElement>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении событий из реалма");
+            return new List<JsonElement>();
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <summary>
+    /// Получение service account пользователя для клиента
+    /// </summary>
+    public async Task<string?> GetServiceAccountUserIdAsync(string realm, string clientInternalId, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            var token = await GetAdminTokenAsync(cancellationToken);
+            var endpoint = $"/admin/realms/{realm}/clients/{clientInternalId}/service-account-user";
+            
+            _logger.LogInformation("Получение service account пользователя для клиента {ClientId}", clientInternalId);
+            
+            var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Ошибка получения service account пользователя: {StatusCode}", response.StatusCode);
+                return null;
+            }
+            
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            var userJson = JsonSerializer.Deserialize<JsonElement>(content);
+            
+            if (userJson.TryGetProperty("id", out var userId))
+            {
+                return userId.GetString();
+            }
+            
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении service account пользователя");
+            return null;
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+    
+    /// <summary>
+    /// Получение role mappings для пользователя
+    /// </summary>
+    public async Task<List<JsonElement>> GetUserRoleMappingsAsync(string realm, string userId, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            var token = await GetAdminTokenAsync(cancellationToken);
+            var endpoint = $"/admin/realms/{realm}/users/{userId}/role-mappings";
+            
+            _logger.LogInformation("Получение role mappings для пользователя {UserId}", userId);
+            
+            var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Ошибка получения role mappings: {StatusCode}", response.StatusCode);
+                return new List<JsonElement>();
+            }
+            
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            var roleMappingsJson = JsonSerializer.Deserialize<JsonElement>(content);
+            
+            var allRoles = new List<JsonElement>();
+            
+            // Получаем realm roles
+            if (roleMappingsJson.TryGetProperty("realmMappings", out var realmMappings) && 
+                realmMappings.ValueKind == JsonValueKind.Array)
+            {
+                allRoles.AddRange(realmMappings.EnumerateArray());
+            }
+            
+            // Получаем client roles
+            if (roleMappingsJson.TryGetProperty("clientMappings", out var clientMappings) && 
+                clientMappings.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var clientMapping in clientMappings.EnumerateObject())
+                {
+                    if (clientMapping.Value.TryGetProperty("mappings", out var mappings) && 
+                        mappings.ValueKind == JsonValueKind.Array)
+                    {
+                        allRoles.AddRange(mappings.EnumerateArray());
+                    }
+                }
+            }
+            
+            return allRoles;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении role mappings");
+            return new List<JsonElement>();
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <summary>
     /// Получение admin token для Keycloak
     /// </summary>
     private async Task<string> GetAdminTokenAsync(CancellationToken cancellationToken = default)
@@ -297,5 +651,312 @@ public class KeycloakHttpClient
         
         client.MatchedFields = matchedFields;
         return matchedFields.Any();
+    }
+
+    /// <summary>
+    /// Обновить клиента в Keycloak
+    /// </summary>
+    public async Task UpdateClientAsync(string realm, string internalId, JsonElement clientData, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            var token = await GetAdminTokenAsync(cancellationToken);
+            
+            var endpoint = $"/admin/realms/{realm}/clients/{internalId}";
+            _logger.LogInformation($"Обновление клиента {internalId} в реалме {realm}");
+
+            var request = new HttpRequestMessage(HttpMethod.Put, endpoint);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            request.Headers.Add("Accept", "application/json");
+            request.Content = JsonContent.Create(clientData);
+            
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogError($"Ошибка обновления клиента {internalId}: {response.StatusCode} - {errorContent}");
+                throw new HttpRequestException($"Не удалось обновить клиента: {response.StatusCode} - {errorContent}");
+            }
+
+            _logger.LogInformation($"Клиент {internalId} успешно обновлен в реалме {realm}");
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <summary>
+    /// Создать роль клиента
+    /// </summary>
+    public async Task CreateClientRoleAsync(string realm, string clientInternalId, string roleName, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            var token = await GetAdminTokenAsync(cancellationToken);
+            var endpoint = $"/admin/realms/{realm}/clients/{clientInternalId}/roles";
+            
+            _logger.LogInformation($"Создание роли '{roleName}' для клиента {clientInternalId} в реалме {realm}");
+
+            var roleData = new
+            {
+                name = roleName,
+                description = $"Role {roleName}",
+                clientRole = true
+            };
+
+            var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            request.Headers.Add("Accept", "application/json");
+            request.Content = JsonContent.Create(roleData);
+            
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogError($"Ошибка создания роли '{roleName}': {response.StatusCode} - {errorContent}");
+                throw new HttpRequestException($"Не удалось создать роль: {response.StatusCode} - {errorContent}");
+            }
+
+            _logger.LogInformation($"Роль '{roleName}' успешно создана для клиента {clientInternalId}");
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <summary>
+    /// Удалить роль клиента
+    /// </summary>
+    public async Task DeleteClientRoleAsync(string realm, string clientInternalId, string roleName, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            var token = await GetAdminTokenAsync(cancellationToken);
+            var endpoint = $"/admin/realms/{realm}/clients/{clientInternalId}/roles/{roleName}";
+            
+            _logger.LogInformation($"Удаление роли '{roleName}' для клиента {clientInternalId} в реалме {realm}");
+
+            var request = new HttpRequestMessage(HttpMethod.Delete, endpoint);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            request.Headers.Add("Accept", "application/json");
+            
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogError($"Ошибка удаления роли '{roleName}': {response.StatusCode} - {errorContent}");
+                throw new HttpRequestException($"Не удалось удалить роль: {response.StatusCode} - {errorContent}");
+            }
+
+            _logger.LogInformation($"Роль '{roleName}' успешно удалена для клиента {clientInternalId}");
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <summary>
+    /// Получить доступные realm роли для назначения пользователю
+    /// </summary>
+    public async Task<List<JsonElement>> GetAvailableRealmRolesAsync(string realm, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            var token = await GetAdminTokenAsync(cancellationToken);
+            var endpoint = $"/admin/realms/{realm}/roles";
+            
+            _logger.LogInformation($"Получение realm ролей для реалма {realm}");
+
+            var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            request.Headers.Add("Accept", "application/json");
+            
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Ошибка получения realm ролей: {StatusCode}", response.StatusCode);
+                return new List<JsonElement>();
+            }
+
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            var roles = JsonSerializer.Deserialize<List<JsonElement>>(content);
+            
+            return roles ?? new List<JsonElement>();
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <summary>
+    /// Назначить realm роль пользователю
+    /// </summary>
+    public async Task AssignRealmRoleToUserAsync(string realm, string userId, string roleName, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            var token = await GetAdminTokenAsync(cancellationToken);
+            
+            // Сначала получаем полную информацию о роли
+            var rolesEndpoint = $"/admin/realms/{realm}/roles/{roleName}";
+            var roleRequest = new HttpRequestMessage(HttpMethod.Get, rolesEndpoint);
+            roleRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            
+            var roleResponse = await _httpClient.SendAsync(roleRequest, cancellationToken);
+            if (!roleResponse.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException($"Не удалось найти роль '{roleName}'");
+            }
+            
+            var roleContent = await roleResponse.Content.ReadAsStringAsync(cancellationToken);
+            var roleData = JsonSerializer.Deserialize<JsonElement>(roleContent);
+            
+            // Назначаем роль пользователю
+            var endpoint = $"/admin/realms/{realm}/users/{userId}/role-mappings/realm";
+            _logger.LogInformation($"Назначение роли '{roleName}' пользователю {userId} в реалме {realm}");
+
+            var assignRequest = new HttpRequestMessage(HttpMethod.Post, endpoint);
+            assignRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            assignRequest.Headers.Add("Accept", "application/json");
+            assignRequest.Content = JsonContent.Create(new[] { roleData });
+            
+            var response = await _httpClient.SendAsync(assignRequest, cancellationToken);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogError($"Ошибка назначения роли '{roleName}': {response.StatusCode} - {errorContent}");
+                throw new HttpRequestException($"Не удалось назначить роль: {response.StatusCode} - {errorContent}");
+            }
+
+            _logger.LogInformation($"Роль '{roleName}' успешно назначена пользователю {userId}");
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <summary>
+    /// Удалить любую роль у пользователя (realm или client role)
+    /// </summary>
+    public async Task RemoveRoleFromUserAsync(string realm, string userId, string roleName, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            var token = await GetAdminTokenAsync(cancellationToken);
+            
+            // Получаем все role mappings пользователя
+            var allMappingsEndpoint = $"/admin/realms/{realm}/users/{userId}/role-mappings";
+            var mappingsRequest = new HttpRequestMessage(HttpMethod.Get, allMappingsEndpoint);
+            mappingsRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            
+            var mappingsResponse = await _httpClient.SendAsync(mappingsRequest, cancellationToken);
+            if (!mappingsResponse.IsSuccessStatusCode)
+            {
+                _logger.LogWarning($"Не удалось получить role mappings для поиска роли '{roleName}'");
+                return;
+            }
+            
+            var mappingsContent = await mappingsResponse.Content.ReadAsStringAsync(cancellationToken);
+            var roleMappingsJson = JsonSerializer.Deserialize<JsonElement>(mappingsContent);
+            
+            // Сначала проверяем realm roles
+            if (roleMappingsJson.TryGetProperty("realmMappings", out var realmMappings) && 
+                realmMappings.ValueKind == JsonValueKind.Array)
+            {
+                var roleInRealm = realmMappings.EnumerateArray().FirstOrDefault(r => 
+                    r.TryGetProperty("name", out var name) && name.GetString() == roleName);
+                
+                if (roleInRealm.ValueKind != JsonValueKind.Undefined)
+                {
+                    // Это realm role - удаляем через realm endpoint
+                    _logger.LogInformation($"Удаление realm роли '{roleName}' у пользователя {userId}");
+                    
+                    var deleteEndpoint = $"/admin/realms/{realm}/users/{userId}/role-mappings/realm";
+                    var deleteRequest = new HttpRequestMessage(HttpMethod.Delete, deleteEndpoint);
+                    deleteRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                    deleteRequest.Headers.Add("Accept", "application/json");
+                    deleteRequest.Content = JsonContent.Create(new[] { roleInRealm });
+                    
+                    var response = await _httpClient.SendAsync(deleteRequest, cancellationToken);
+                    
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                        _logger.LogError($"Ошибка удаления realm роли '{roleName}': {response.StatusCode} - {errorContent}");
+                        throw new HttpRequestException($"Не удалось удалить realm роль: {response.StatusCode}");
+                    }
+                    
+                    _logger.LogInformation($"Realm роль '{roleName}' успешно удалена");
+                    return;
+                }
+            }
+            
+            // Проверяем client roles
+            if (roleMappingsJson.TryGetProperty("clientMappings", out var clientMappings) && 
+                clientMappings.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var clientMapping in clientMappings.EnumerateObject())
+                {
+                    if (clientMapping.Value.TryGetProperty("mappings", out var mappings) && 
+                        mappings.ValueKind == JsonValueKind.Array)
+                    {
+                        var roleInClient = mappings.EnumerateArray().FirstOrDefault(r => 
+                            r.TryGetProperty("name", out var name) && name.GetString() == roleName);
+                        
+                        if (roleInClient.ValueKind != JsonValueKind.Undefined)
+                        {
+                            // Это client role - получаем ID клиента и удаляем
+                            var clientId = clientMapping.Value.TryGetProperty("id", out var idProp) ? 
+                                idProp.GetString() : null;
+                            
+                            if (clientId != null)
+                            {
+                                _logger.LogInformation($"Удаление client роли '{roleName}' (client: {clientMapping.Name}) у пользователя {userId}");
+                                
+                                var deleteEndpoint = $"/admin/realms/{realm}/users/{userId}/role-mappings/clients/{clientId}";
+                                var deleteRequest = new HttpRequestMessage(HttpMethod.Delete, deleteEndpoint);
+                                deleteRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                                deleteRequest.Headers.Add("Accept", "application/json");
+                                deleteRequest.Content = JsonContent.Create(new[] { roleInClient });
+                                
+                                var response = await _httpClient.SendAsync(deleteRequest, cancellationToken);
+                                
+                                if (!response.IsSuccessStatusCode)
+                                {
+                                    var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                                    _logger.LogError($"Ошибка удаления client роли '{roleName}': {response.StatusCode} - {errorContent}");
+                                    throw new HttpRequestException($"Не удалось удалить client роль: {response.StatusCode}");
+                                }
+                                
+                                _logger.LogInformation($"Client роль '{roleName}' успешно удалена");
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            _logger.LogWarning($"Роль '{roleName}' не найдена ни в realm, ни в client roles для пользователя {userId}");
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 }

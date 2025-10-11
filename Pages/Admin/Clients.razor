@@ -10,6 +10,7 @@
 @inject NavigationManager Navigation
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JSRuntime
+@inject ISearchStateService SearchStateService
 
 <PageTitle>Управление клиентами - KeyCloak Assistant</PageTitle>
 
@@ -203,7 +204,7 @@
                                         <span class="text-sm text-gray-500">-</span>
                                     }
                                 </td>
-                                <td class="py-4 px-4">
+                                <td class="py-4 px-4 text-center">
                                     <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium @(client.Enabled ? "bg-green-900/50 text-green-300" : "bg-red-900/50 text-red-300")">
                                         @(client.Enabled ? "Активен" : "Отключен")
                                     </span>
@@ -411,7 +412,17 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // Инициализация компонента
+        // Восстанавливаем состояние поиска из сервиса
+        if (SearchStateService.HasSavedState())
+        {
+            var (savedQuery, savedResponse, savedPage, savedHasSearched) = SearchStateService.GetSearchState();
+            searchQuery = savedQuery;
+            searchResponse = savedResponse;
+            currentPage = savedPage;
+            hasSearched = savedHasSearched;
+            showResultsSection = hasSearched && searchResponse?.Clients?.Any() == true;
+        }
+        
         await Task.CompletedTask;
     }
 
@@ -521,6 +532,10 @@ else
         finally
         {
             isSearching = false;
+            
+            // Сохраняем состояние поиска после завершения
+            SearchStateService.SaveSearchState(searchQuery, searchResponse, currentPage, hasSearched);
+            
             StateHasChanged();
         }
     }
@@ -541,11 +556,18 @@ else
         hasSearched = false;
         showResultsSection = false;
         isResultsFadingOut = false;
+        
+        // Очищаем сохраненное состояние
+        SearchStateService.ClearSearchState();
+        
         StateHasChanged();
     }
 
     private void ViewClient(ClientSearchResult client)
     {
+        // Сохраняем текущее состояние поиска перед переходом
+        SearchStateService.SaveSearchState(searchQuery, searchResponse, currentPage, hasSearched);
+        
         // Перенаправляем на отдельную страницу клиента
         Navigation.NavigateTo($"/admin/clients/{client.Realm}/{client.ClientId}");
     }
@@ -581,7 +603,7 @@ else
 
     private string GetResultsContainerClasses()
     {
-        var baseClasses = "card p-6 transition-all duration-300 ease-out";
+        var baseClasses = "card-modern p-6 transition-all duration-300 ease-out";
         
         if (isResultsFadingOut)
         {

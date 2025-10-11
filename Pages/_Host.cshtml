@@ -95,13 +95,12 @@
                        }, 400);
                    }
                    
-                   // Добавляем анимацию для всех элементов с классом animate-stagger
+                   // Сбрасываем анимацию для элементов с классом animate-stagger
+                   // чтобы CSS анимации работали корректно
                    const staggerElements = document.querySelectorAll('.animate-stagger');
-                   staggerElements.forEach((element, index) => {
-                       element.style.opacity = '0';
-                       setTimeout(() => {
-                           element.style.opacity = '1';
-                       }, 50 + (index * 50));
+                   staggerElements.forEach((element) => {
+                       // Удаляем inline стили, чтобы CSS анимации работали
+                       element.style.opacity = '';
                    });
                });
 
@@ -111,12 +110,6 @@
                    if (mainContent) {
                        mainContent.classList.add('page-transition-exit');
                    }
-                   
-                   // Скрываем элементы перед переходом
-                   const staggerElements = document.querySelectorAll('.animate-stagger');
-                   staggerElements.forEach(element => {
-                       element.style.opacity = '0';
-                   });
                });
 
                // Плавная прокрутка к началу страницы при навигации

@@ -8,7 +8,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JSRuntime
 
-<PageTitle>@(clientDetails?.Name ?? "Клиент") - KeyCloak Assistant</PageTitle>
+<PageTitle>@(clientDetails?.ClientId ?? "Клиент") - KeyCloak Assistant</PageTitle>
 
 @{
     var isAuthenticated = HttpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true;
@@ -26,74 +26,75 @@
     }
 }
 
-    <div class="min-h-screen animate-content-fade-in">
-    <!-- Компактный Header -->
-    <div class="mb-6">
-        <div class="glass rounded-xl p-4 border border-gray-700/50">
-            <div class="flex items-center justify-between flex-wrap gap-3">
-                <div class="flex items-center space-x-3">
-                    <!-- Кнопка "Назад" -->
-                    <button @onclick="NavigateBack" 
-                            class="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600/50 transition-colors">
+<div class="min-h-screen p-6 page-fade-in">
+    @if (showLoadingIndicator)
+    {
+        <!-- Loading State -->
+        <div class="flex items-center justify-center py-20">
+            <div class="text-center space-y-4">
+                <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <p class="text-gray-400">Загрузка данных клиента...</p>
+            </div>
+        </div>
+    }
+    else if (error != null)
+    {
+        <!-- Error State -->
+        <div class="max-w-2xl mx-auto">
+            <div class="bg-red-500/10 border border-red-500/50 rounded-lg p-6">
+                <div class="flex items-start space-x-3">
+                    <svg class="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-red-400 mb-2">Ошибка загрузки</h3>
+                        <p class="text-red-300">@error</p>
+                        <button @onclick="LoadClientDetails" class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                            Попробовать снова
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (clientDetails != null)
+    {
+        <!-- Header -->
+        <div class="card-modern p-6 mb-6 animate-stagger">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center space-x-4">
+                    <button @onclick="NavigateBack" class="btn-modern p-3 bg-gray-800/50 hover:bg-gray-700/50 rounded-xl transition-all">
                         <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                         </svg>
                     </button>
-                    
-                    <!-- Иконка клиента -->
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                    </div>
-                    
-                    <div>
-                        <h1 class="text-2xl font-bold text-white">
-                            @(clientDetails?.Name ?? "Загрузка...")
-                        </h1>
-                        <div class="flex items-center space-x-2 mt-1">
-                            <span class="px-2 py-1 bg-blue-500/20 text-blue-300 rounded text-xs font-mono">@ClientId</span>
-                            <span class="px-2 py-1 bg-purple-500/20 text-purple-300 rounded text-xs">@Realm</span>
-                            @if (clientDetails?.Enabled == true)
-                            {
-                                <span class="px-2 py-1 bg-green-500/20 text-green-300 rounded text-xs flex items-center space-x-1">
-                                    <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
-                                    <span>Активен</span>
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="px-2 py-1 bg-red-500/20 text-red-300 rounded text-xs flex items-center space-x-1">
-                                    <span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
-                                    <span>Отключен</span>
-                                </span>
-                            }
-                        </div>
+                    <div class="flex items-center gap-4">
+                        <h1 class="text-3xl font-bold text-gradient">@clientDetails.ClientId</h1>
+                        @if (clientDetails.Enabled)
+                        {
+                            <span @onclick="ToggleClientStatus" class="status-active cursor-pointer hover:scale-105 transition-transform" title="Нажмите для отключения клиента">
+                                <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                                <span>Активен</span>
+                            </span>
+                        }
+                        else
+                        {
+                            <span @onclick="ToggleClientStatus" class="status-inactive cursor-pointer hover:scale-105 transition-transform" title="Нажмите для активации клиента">
+                                <span class="w-2 h-2 bg-red-400 rounded-full animate-pulse"></span>
+                                <span>Отключен</span>
+                            </span>
+                        }
                     </div>
                 </div>
-                
-                <!-- Кнопки действий -->
-                <div class="flex items-center space-x-2">
-                    <button @onclick="RefreshData" 
-                            disabled="@isLoading"
-                            class="px-3 py-2 bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm disabled:opacity-50">
-                        <svg class="w-4 h-4 @(isLoading ? "animate-spin" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                        <span>Обновить</span>
-                    </button>
-                    
-                    <button @onclick="SaveChanges" 
-                            class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="flex items-center space-x-3">
+                    <button @onclick="SaveChanges" class="btn-save">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
                         </svg>
-                        <span>Сохранить</span>
+                        Сохранить
                     </button>
-                    
-                    <button @onclick="DeleteClient" 
-                            class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center space-x-2 text-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button @onclick="DeleteClient" class="px-5 py-3 bg-gray-700 hover:bg-gray-800 text-gray-300 hover:text-red-400 rounded-xl flex items-center space-x-2 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
                         <span>Удалить</span>
@@ -101,666 +102,534 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    @if (isLoading)
-    {
-        <!-- Loading State -->
-        <div class="flex flex-col items-center justify-center py-20 space-y-4">
-            <div class="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
-            <p class="text-gray-400 text-lg">Загрузка деталей клиента...</p>
-        </div>
-    }
-    else if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <!-- Error State -->
-        <div class="glass rounded-2xl p-8">
-            <div class="flex flex-col items-center justify-center space-y-4">
-                <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
-                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        <!-- Tabs -->
+        <div class="card-modern p-2 mb-6 animate-stagger">
+            <nav class="flex space-x-2">
+                <button @onclick="@(() => activeTab = "settings")" class="@(activeTab == "settings" ? "tab-modern active" : "tab-modern") flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
-                </div>
-                <p class="text-red-400 text-lg">@errorMessage</p>
-                <button @onclick="RefreshData" 
-                        class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
-                    Повторить попытку
+                    <span>Settings</span>
                 </button>
-            </div>
-        </div>
-    }
-    else if (clientDetails != null)
-    {
-        <!-- Компактные вкладки -->
-        <div class="glass rounded-t-xl border-b border-gray-700/50 overflow-x-auto">
-            <nav class="flex space-x-1 p-2">
-                <button @onclick="SelectSettingsTab" 
-                        class="@GetTabClass("settings")">
-                    <div class="flex items-center space-x-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                        <span class="text-sm font-medium">Settings</span>
-                    </div>
+                <button @onclick="@(() => activeTab = "credentials")" class="@(activeTab == "credentials" ? "tab-modern active" : "tab-modern") flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                    </svg>
+                    <span>Credentials</span>
                 </button>
-                
-                <button @onclick="SelectCredentialsTab" 
-                        class="@GetTabClass("credentials")">
-                    <div class="flex items-center space-x-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1721 9z"></path>
-                        </svg>
-                        <span class="text-sm font-medium">Credentials</span>
-                    </div>
+                <button @onclick="@(() => activeTab = "roles")" class="@(activeTab == "roles" ? "tab-modern active" : "tab-modern") flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <span>Roles</span>
                 </button>
-                
-                <button @onclick="SelectRolesTab" 
-                        class="@GetTabClass("roles")">
-                    <div class="flex items-center space-x-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
-                        <span class="text-sm font-medium">Roles</span>
-                    </div>
+                <button @onclick="@(() => activeTab = "endpoints")" class="@(activeTab == "endpoints" ? "tab-modern active" : "tab-modern") flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <span>Endpoints</span>
                 </button>
-                
-                <button @onclick="SelectEndpointsTab" 
-                        class="@GetTabClass("endpoints")">
-                    <div class="flex items-center space-x-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                        <span class="text-sm font-medium">Endpoints</span>
-                    </div>
-                </button>
-                
-                <button @onclick="SelectEventsTab" 
-                        class="@GetTabClass("events")">
-                    <div class="flex items-center space-x-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <span class="text-sm font-medium">Events</span>
-                    </div>
+                <button @onclick="@(() => activeTab = "events")" class="@(activeTab == "events" ? "tab-modern active" : "tab-modern") flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Events</span>
                 </button>
             </nav>
         </div>
 
         <!-- Tab Content -->
-        <div class="glass rounded-b-xl p-4 animate-content-fade-in">
-            @if (activeTab == "settings")
-            {
-                <div class="space-y-6">
-                    <!-- General Settings -->
-                    <div class="space-y-4">
-                        <div class="flex items-center space-x-2 pb-3 border-b border-gray-700/50">
-                            <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                            <h2 class="text-lg font-semibold text-white">
-                                General Settings
-                            </h2>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Client ID -->
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-300">Client ID</label>
-                                <input type="text" 
-                                       value="@clientDetails.ClientId" 
-                                       readonly
-                                       class="w-full bg-gray-800/50 text-gray-300 font-mono px-3 py-2 rounded-lg border border-gray-600/50 cursor-not-allowed text-sm" />
-                                <p class="text-xs text-gray-500">Уникальный идентификатор</p>
-                            </div>
-                            
-                            <!-- Name -->
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-300">Name</label>
-                                <input type="text" 
-                                       @bind="clientDetails.Name"
-                                       class="w-full bg-gray-800/50 text-white px-3 py-2 rounded-lg border border-gray-600/50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm" />
-                                <p class="text-xs text-gray-500">Отображаемое имя</p>
-                            </div>
-                            
-                            <!-- Description -->
-                            <div class="md:col-span-2 space-y-1">
-                                <label class="block text-sm font-medium text-gray-300">Description</label>
-                                <textarea @bind="clientDetails.Description"
-                                          rows="3"
-                                          placeholder="Опишите назначение клиента..."
-                                          class="w-full bg-gray-800/50 text-white px-3 py-2 rounded-lg border border-gray-600/50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none text-sm"></textarea>
+        <div class="card-modern p-8 animate-stagger">
+                @if (activeTab == "settings")
+                {
+                    <div class="space-y-6 tab-content-fade" @key="@activeTab">
+                        <!-- General Settings -->
+                        <div>
+                            <h3 class="text-xl font-bold text-gradient mb-6">General Settings</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-3">Client ID</label>
+                                    <input type="text" value="@clientDetails.ClientId" readonly class="w-full input-modern cursor-not-allowed opacity-60 font-mono" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-3">Realm</label>
+                                    <input type="text" value="@clientDetails.Realm" readonly class="w-full input-modern cursor-not-allowed opacity-60" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-3">Name</label>
+                                    <input type="text" @bind="clientDetails.Name" class="w-full input-modern" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-3">Description</label>
+                                    <textarea @bind="clientDetails.Description" placeholder="Описание клиента..." class="w-full input-modern resize-y min-h-[100px]"></textarea>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Capability Config -->
-                    <div class="space-y-4">
-                        <div class="flex items-center space-x-2 pb-3 border-b border-gray-700/50">
-                            <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                                </svg>
-                            </div>
-                            <h2 class="text-lg font-semibold text-white">
-                                Capability Config
-                            </h2>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Client Authentication -->
-                            <div class="bg-gray-800/30 rounded-lg p-3 border border-gray-700/50">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-2">
-                                        <svg class="w-4 h-4 @(clientDetails.ClientAuthentication ? "text-green-400" : "text-gray-500")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                                        </svg>
+                        <!-- Capability Config -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-white mb-4">Capability Config</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="bg-gray-800/30 rounded-lg p-4">
+                                    <div class="flex items-center justify-between mb-2">
                                         <span class="text-sm font-medium text-white">Client Authentication</span>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" @bind="clientDetails.ClientAuthentication" @bind:after="OnClientAuthenticationChanged" class="sr-only peer" />
+                                            <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-checked:shadow-lg peer-checked:shadow-blue-500/50"></div>
+                                        </label>
                                     </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" 
-                                               @bind="clientDetails.ClientAuthentication"
-                                               class="sr-only peer" />
-                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                    </label>
+                                    <p class="text-xs text-gray-500">Требовать аутентификацию</p>
                                 </div>
-                                <p class="text-xs text-gray-400 mt-1">Требовать аутентификацию клиента</p>
-                            </div>
-                            
-                            <!-- Standard Flow -->
-                            <div class="bg-gray-800/30 rounded-lg p-3 border border-gray-700/50">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-2">
-                                        <svg class="w-4 h-4 @(clientDetails.StandardFlow ? "text-green-400" : "text-gray-500")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                        </svg>
+                                <div class="bg-gray-800/30 rounded-lg p-4">
+                                    <div class="flex items-center justify-between mb-2">
                                         <span class="text-sm font-medium text-white">Standard Flow</span>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" @bind="clientDetails.StandardFlow" @bind:after="OnStandardFlowChanged" class="sr-only peer" />
+                                            <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-checked:shadow-lg peer-checked:shadow-blue-500/50"></div>
+                                        </label>
                                     </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" 
-                                               @bind="clientDetails.StandardFlow"
-                                               class="sr-only peer" />
-                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                    </label>
+                                    <p class="text-xs text-gray-500">OIDC authorization code flow</p>
                                 </div>
-                                <p class="text-xs text-gray-400 mt-1">Разрешить стандартный OIDC flow</p>
-                            </div>
-                            
-                            <!-- Service Accounts Roles -->
-                            <div class="bg-gray-800/30 rounded-lg p-3 border border-gray-700/50">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-2">
-                                        <svg class="w-4 h-4 @(clientDetails.ServiceAccountsRoles ? "text-green-400" : "text-gray-500")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                        </svg>
-                                        <span class="text-sm font-medium text-white">Service Accounts Roles</span>
+                                <div class="bg-gray-800/30 rounded-lg p-4 @(!clientDetails.ClientAuthentication ? "opacity-50" : "")">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-white">Service Accounts</span>
+                                        <label class="relative inline-flex items-center @(clientDetails.ClientAuthentication ? "cursor-pointer" : "cursor-not-allowed")">
+                                            <input type="checkbox" @bind="clientDetails.ServiceAccountsRoles" @bind:after="OnServiceAccountsChanged" disabled="@(!clientDetails.ClientAuthentication)" class="sr-only peer" />
+                                            <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-checked:shadow-lg peer-checked:shadow-blue-500/50 peer-disabled:opacity-50"></div>
+                                        </label>
                                     </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" 
-                                               @bind="clientDetails.ServiceAccountsRoles"
-                                               class="sr-only peer" />
-                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                    </label>
+                                    <p class="text-xs text-gray-500">Включить service accounts</p>
+                                    @if (!clientDetails.ClientAuthentication)
+                                    {
+                                        <p class="text-xs text-gray-400 mt-1">⚠️ Требуется Client Authentication</p>
+                                    }
                                 </div>
-                                <p class="text-xs text-gray-400 mt-1">Включить роли для service accounts</p>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Access Settings -->
-                    <div class="space-y-6 relative">
-                        <!-- Декоративный градиент -->
-                        <div class="absolute -inset-4 bg-gradient-to-r from-purple-600/5 via-pink-600/5 to-red-600/5 rounded-3xl blur-2xl"></div>
-                        
-                        <div class="relative">
-                            <div class="flex items-center space-x-3 pb-4 border-b-2 border-gradient-to-r from-purple-500 via-pink-500 to-red-500">
-                                <div class="w-12 h-12 bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30 animate-glow-pulse">
-                                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                                    </svg>
-                                </div>
-                                <h2 class="text-2xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 bg-clip-text text-transparent">
-                                    Access Settings
-                                </h2>
-                            </div>
-                        </div>
-                        
-                        <div class="relative grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-gray-300 flex items-center space-x-2">
-                                    <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                                    </svg>
-                                    <span>Client Type</span>
-                                </label>
-                                <select @bind="clientDetails.ClientType"
-                                        class="w-full input-premium">
-                                    <option value="public">Public</option>
-                                    <option value="confidential">Confidential</option>
-                                    <option value="bearer-only">Bearer-only</option>
-                                </select>
-                                <p class="text-xs text-gray-500">Тип аутентификации клиента</p>
-                            </div>
-                            
-                            <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-gray-300 flex items-center space-x-2">
-                                    <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                                    </svg>
-                                    <span>Protocol</span>
-                                </label>
-                                <div class="flex items-center space-x-3 bg-gradient-to-r from-purple-500/10 to-pink-500/10 px-5 py-4 rounded-xl border-2 border-purple-500/30 shadow-lg shadow-purple-500/10 hover:shadow-purple-500/20 transition-all duration-300">
-                                    <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center shadow-lg">
-                                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        <!-- Redirect URIs -->
+                        <div class="@(!clientDetails.StandardFlow ? "opacity-50 pointer-events-none" : "")">
+                            <div class="flex items-center gap-3 mb-3">
+                                <h3 class="text-lg font-semibold text-white">Valid Redirect URIs</h3>
+                                @if (!clientDetails.StandardFlow)
+                                {
+                                    <span class="text-xs text-gray-400 bg-gray-700/50 px-2 py-1 rounded">Требуется Standard Flow</span>
+                                }
+                                else if (clientDetails.StandardFlow && !clientDetails.RedirectUris.Any())
+                                {
+                                    <span class="text-xs text-red-400 bg-red-500/10 px-2 py-1 rounded flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                                         </svg>
-                                    </div>
-                                    <span class="text-white font-mono text-lg font-semibold">@clientDetails.Protocol</span>
-                                </div>
+                                        Обязательно
+                                    </span>
+                                }
                             </div>
                             
-                            <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-gray-300 mb-3">Service Accounts</label>
-                                <div class="flex items-center justify-between card-premium">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="w-10 h-10 @(clientDetails.ServiceAccountsEnabled ? "bg-green-500/20" : "bg-gray-700") rounded-lg flex items-center justify-center transition-all duration-300">
-                                            <svg class="w-6 h-6 @(clientDetails.ServiceAccountsEnabled ? "text-green-400" : "text-gray-500")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                            </svg>
-                                        </div>
-                                        <span class="text-white font-medium">Service Accounts Enabled</span>
-                                    </div>
-                                    <div class="toggle-switch">
-                                        <input type="checkbox" 
-                                               @bind="clientDetails.ServiceAccountsEnabled"
-                                               id="service-accounts-toggle" />
-                                        <label for="service-accounts-toggle" class="toggle-slider"></label>
-                                    </div>
-                                </div>
-                                <p class="text-xs text-gray-500">Разрешить клиенту аутентифицироваться для получения токена</p>
-                            </div>
-                            
-                            <div class="space-y-2">
-                                <label class="flex items-center justify-between">
-                                    <span class="text-sm font-medium text-gray-300">Authorization Services</span>
-                                    <div class="relative">
-                                        <input type="checkbox" 
-                                               @bind="clientDetails.AuthorizationServicesEnabled"
-                                               class="sr-only peer" />
-                                        <div class="w-14 h-8 bg-gray-700 rounded-full peer-checked:bg-green-600 transition-colors cursor-pointer"></div>
-                                        <div class="absolute left-1 top-1 w-6 h-6 bg-white rounded-full transition-transform peer-checked:translate-x-6 cursor-pointer"></div>
-                                    </div>
-                                </label>
-                                <p class="text-xs text-gray-500">Включить тонкую настройку авторизации</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Login Settings -->
-                    <div class="space-y-4">
-                        <h2 class="text-xl font-semibold text-white flex items-center space-x-2 pb-3 border-b border-gray-700/50">
-                            <div class="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
-                                </svg>
-                            </div>
-                            <span>Login Settings</span>
-                        </h2>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="space-y-2">
-                                <label class="block text-sm font-medium text-gray-300">Root URL</label>
-                                <input type="text" 
-                                       @bind="clientDetails.RootUrl"
-                                       placeholder="https://example.com"
-                                       class="w-full bg-gray-800/50 text-white font-mono px-4 py-3 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 transition-colors" />
-                            </div>
-                            
-                            <div class="space-y-2">
-                                <label class="block text-sm font-medium text-gray-300">Base URL</label>
-                                <input type="text" 
-                                       @bind="clientDetails.BaseUrl"
-                                       placeholder="/"
-                                       class="w-full bg-gray-800/50 text-white font-mono px-4 py-3 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 transition-colors" />
-                            </div>
-                            
-                            <div class="md:col-span-2 space-y-2">
-                                <label class="block text-sm font-medium text-gray-300">Admin URL</label>
-                                <input type="text" 
-                                       @bind="clientDetails.AdminUrl"
-                                       placeholder="https://example.com/admin"
-                                       class="w-full bg-gray-800/50 text-white font-mono px-4 py-3 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 transition-colors" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Redirect URIs -->
-                    <div class="space-y-4">
-                        <h2 class="text-xl font-semibold text-white flex items-center space-x-2 pb-3 border-b border-gray-700/50">
-                            <div class="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                                </svg>
-                            </div>
-                            <span>Valid Redirect URIs</span>
-                        </h2>
-                        
-                        <div class="space-y-3">
-                            @for (int i = 0; i < clientDetails.RedirectUris.Count; i++)
-                            {
-                                var index = i;
-                                <div class="flex items-center space-x-2">
-                                    <input type="text" 
-                                           value="@clientDetails.RedirectUris[index]"
-                                           @onchange="@(e => UpdateRedirectUri(index, e.Value?.ToString() ?? ""))"
-                                           placeholder="https://example.com/*"
-                                           class="flex-1 bg-gray-800/50 text-white font-mono px-4 py-3 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 transition-colors" />
-                                    <button @onclick="@(() => RemoveRedirectUri(index))" 
-                                            class="p-3 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                        </svg>
-                                    </button>
-                                </div>
-                            }
-                            
-                            <button @onclick="AddRedirectUri" 
-                                    class="btn-premium w-full flex items-center justify-center space-x-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                </svg>
-                                <span>+ Добавить Redirect URI</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Web Origins -->
-                    <div class="space-y-4">
-                        <h2 class="text-xl font-semibold text-white flex items-center space-x-2 pb-3 border-b border-gray-700/50">
-                            <div class="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
-                                </svg>
-                            </div>
-                            <span>Web Origins</span>
-                        </h2>
-                        
-                        <div class="space-y-3">
-                            @for (int i = 0; i < clientDetails.WebOrigins.Count; i++)
-                            {
-                                var index = i;
-                                <div class="flex items-center space-x-2">
-                                    <input type="text" 
-                                           value="@clientDetails.WebOrigins[index]"
-                                           @onchange="@(e => UpdateWebOrigin(index, e.Value?.ToString() ?? ""))"
-                                           placeholder="https://example.com"
-                                           class="flex-1 bg-gray-800/50 text-white font-mono px-4 py-3 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 transition-colors" />
-                                    <button @onclick="@(() => RemoveWebOrigin(index))" 
-                                            class="p-3 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                        </svg>
-                                    </button>
-                                </div>
-                            }
-                            
-                            <button @onclick="AddWebOrigin" 
-                                    class="w-full px-4 py-3 border-2 border-dashed border-gray-700 hover:border-blue-500 text-gray-400 hover:text-blue-400 rounded-lg transition-colors flex items-center justify-center space-x-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                </svg>
-                                <span>Добавить Web Origin</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            }
-            else if (activeTab == "credentials")
-            {
-                <div class="space-y-6">
-                    <h2 class="text-xl font-semibold text-white flex items-center space-x-2 pb-3 border-b border-gray-700/50">
-                        <div class="w-8 h-8 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1721 9z"></path>
-                            </svg>
-                        </div>
-                        <span>Client Authenticator</span>
-                    </h2>
-                    
-                    @if (!string.IsNullOrEmpty(clientDetails.ClientSecret))
-                    {
-                        <div class="glass rounded-xl p-6 space-y-4">
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-lg font-semibold text-white">Client Secret</h3>
-                                <button @onclick="RegenerateSecret" 
-                                        class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors text-sm flex items-center space-x-2">
+                            <!-- Input field -->
+                            <div class="flex items-center space-x-2 mb-3">
+                                <input type="text" @bind="newRedirectUri" @onkeypress="@(async e => { if (e.Key == "Enter") await AddRedirectUri(); })" placeholder="https://example.com/callback" disabled="@(!clientDetails.StandardFlow)" class="flex-1 bg-gray-800/50 text-white px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:bg-gray-800/70 transition-colors font-mono disabled:cursor-not-allowed" />
+                                <button @onclick="AddRedirectUri" disabled="@(!clientDetails.StandardFlow)" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                                     </svg>
-                                    <span>Regenerate</span>
+                                    <span>Add</span>
                                 </button>
                             </div>
                             
-                            <div class="flex items-center space-x-2">
-                                <input type="password" 
-                                       id="clientSecret"
-                                       value="@clientDetails.ClientSecret" 
-                                       readonly
-                                       class="flex-1 bg-gray-800/50 text-white font-mono px-4 py-3 rounded-lg border border-gray-700 focus:outline-none" />
-                                
-                                <button @onclick="ToggleSecretVisibility" 
-                                        class="p-3 glass hover:bg-gray-700/50 text-gray-300 rounded-lg transition-colors"
-                                        title="Показать/Скрыть">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                    </svg>
-                                </button>
-                                
-                                <button @onclick="@(() => CopyToClipboard(clientDetails.ClientSecret))" 
-                                        class="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                                        title="Копировать">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                            
-                            <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-                                <div class="flex items-start space-x-3">
-                                    <svg class="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                                    </svg>
-                                    <div>
-                                        <p class="text-yellow-300 text-sm font-medium">Важно!</p>
-                                        <p class="text-yellow-200/80 text-sm mt-1">Храните Client Secret в безопасности. Не передавайте его третьим лицам.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="glass rounded-xl p-8 text-center">
-                            <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                            </svg>
-                            <p class="text-gray-400">Client Secret не настроен для публичных клиентов</p>
-                        </div>
-                    }
-                </div>
-            }
-            else if (activeTab == "roles")
-            {
-                <div class="space-y-6">
-                    <!-- Local Roles -->
-                    <div class="space-y-4">
-                        <h2 class="text-xl font-semibold text-white flex items-center space-x-2 pb-3 border-b border-gray-700/50">
-                            <div class="w-8 h-8 bg-gradient-to-br from-pink-500 to-rose-600 rounded-lg flex items-center justify-center">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                </svg>
-                            </div>
-                            <span>Local Roles</span>
-                        </h2>
-                        
-                        @if (clientDetails.LocalRoles.Any())
-                        {
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                @foreach (var role in clientDetails.LocalRoles)
+                            <!-- List of URIs -->
+                            <div class="bg-gray-800/30 rounded-lg p-3">
+                                @if (clientDetails.RedirectUris.Any())
                                 {
-                                    <div class="glass rounded-lg p-4 flex items-center justify-between group hover:bg-gray-700/30 transition-colors">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                                                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                                                </svg>
+                                    <div class="space-y-2">
+                                        @foreach (var (uri, index) in clientDetails.RedirectUris.Select((u, i) => (u, i)))
+                                        {
+                                            <div class="flex items-center justify-between bg-gray-800/50 px-3 py-2 rounded-lg group hover:bg-gray-800/70 transition-colors">
+                                                <span class="text-sm text-gray-300 font-mono flex-1 truncate">@uri</span>
+                                                <button @onclick="@(() => RemoveRedirectUri(index))" class="ml-2 p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                    </svg>
+                                                </button>
                                             </div>
-                                            <span class="text-white font-medium">@role</span>
-                                        </div>
+                                        }
                                     </div>
                                 }
+                                else
+                                {
+                                    <p class="text-sm text-gray-500 text-center py-6">Нет redirect URIs</p>
+                                }
                             </div>
-                        }
-                        else
-                        {
-                            <div class="glass rounded-xl p-8 text-center">
-                                <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                </svg>
-                                <p class="text-gray-400">Локальные роли не настроены</p>
-                            </div>
-                        }
+                        </div>
                     </div>
-
-                    <!-- Service Roles -->
-                    @if (clientDetails.ServiceAccountsEnabled && clientDetails.ServiceRoles.Any())
-                    {
-                        <div class="space-y-4">
-                            <h2 class="text-xl font-semibold text-white flex items-center space-x-2 pb-3 border-b border-gray-700/50">
-                                <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                                    </svg>
+                }
+                else if (activeTab == "credentials")
+                {
+                    <div class="space-y-6 tab-content-fade" @key="@activeTab">
+                        <div>
+                            <h3 class="text-lg font-semibold text-white mb-4">Client Secret</h3>
+                            <div class="bg-gray-700/20 rounded-lg p-4 border border-gray-600/30">
+                                <div class="flex items-center space-x-3">
+                                    <input type="@(isSecretVisible ? "text" : "password")" value="@clientDetails.ClientSecret" readonly class="flex-1 bg-gray-700/30 text-white px-3 py-2 rounded-lg border border-gray-600/50 font-mono text-sm" />
+                                    <button @onclick="ToggleSecretVisibility" class="p-2 text-gray-400 hover:text-white hover:bg-gray-600/50 rounded-lg transition-colors">
+                                        @if (isSecretVisible)
+                                        {
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                                            </svg>
+                                        }
+                                        else
+                                        {
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                            </svg>
+                                        }
+                                    </button>
+                                    <button @onclick="@(() => CopyToClipboard(clientDetails.ClientSecret))" class="p-2 text-gray-400 hover:text-white hover:bg-gray-600/50 rounded-lg transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </button>
+                                    <button @onclick="RegenerateSecret" class="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm transition-colors">
+                                        Regenerate
+                                    </button>
                                 </div>
-                                <span>Service Account Roles</span>
-                            </h2>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else if (activeTab == "roles")
+                {
+                    <div class="space-y-6 tab-content-fade" @key="@activeTab">
+                        <!-- Local Roles -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-white mb-3">Local Roles</h3>
                             
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                @foreach (var role in clientDetails.ServiceRoles)
+                            <!-- Input field -->
+                            <div class="flex items-center space-x-2 mb-3">
+                                <input type="text" @bind="newLocalRole" @onkeypress="@(e => { if (e.Key == "Enter") AddLocalRole(); })" placeholder="Введите название роли" class="flex-1 bg-gray-800/50 text-white px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:bg-gray-800/70 transition-colors" />
+                                <button @onclick="AddLocalRole" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors flex items-center space-x-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                    <span>Add</span>
+                                </button>
+                            </div>
+                            
+                            <!-- List of roles -->
+                            <div class="bg-gray-700/20 rounded-lg p-4 border border-gray-600/30">
+                                @if (clientDetails.LocalRoles.Any())
                                 {
-                                    <div class="glass rounded-lg p-4 flex items-center justify-between group hover:bg-gray-700/30 transition-colors">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                                                <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                                                </svg>
-                                            </div>
-                                            <span class="text-white font-medium">@role</span>
-                                        </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach (var (role, index) in clientDetails.LocalRoles.Select((r, i) => (r, i)))
+                                        {
+                                            <span class="px-3 py-1.5 bg-blue-500/20 text-blue-300 rounded-full text-sm flex items-center gap-2 hover:bg-blue-500/30 transition-colors">
+                                                <span>@role</span>
+                                                <button @onclick="@(() => RemoveLocalRole(index))" class="flex items-center justify-center w-4 h-4 text-blue-300 hover:text-red-400 transition-colors">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                                                    </svg>
+                                                </button>
+                                            </span>
+                                        }
                                     </div>
+                                }
+                                else
+                                {
+                                    <p class="text-sm text-gray-400 text-center py-4">Нет локальных ролей</p>
                                 }
                             </div>
                         </div>
-                    }
-                </div>
-            }
-            else if (activeTab == "endpoints")
-            {
-                <div class="space-y-6">
-                    <h2 class="text-xl font-semibold text-white flex items-center space-x-2 pb-3 border-b border-gray-700/50">
-                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
+
+                        <!-- Service Account Roles -->
+                        <div class="@(!clientDetails.ServiceAccountsRoles ? "opacity-50 pointer-events-none" : "")">
+                            <div class="flex items-center gap-3 mb-3">
+                                <h3 class="text-lg font-semibold text-white">Service Account Roles</h3>
+                                @if (!clientDetails.ServiceAccountsRoles)
+                                {
+                                    <span class="text-xs text-gray-400 bg-gray-700/50 px-2 py-1 rounded">Требуется Service Accounts</span>
+                                }
+                            </div>
+                            
+                            <!-- Input field -->
+                            <div class="flex items-center space-x-2 mb-3">
+                                <input type="text" @bind="newServiceRole" @onkeypress="@(e => { if (e.Key == "Enter") AddServiceRole(); })" placeholder="Введите название роли" disabled="@(!clientDetails.ServiceAccountsRoles)" class="flex-1 bg-gray-800/50 text-white px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:bg-gray-800/70 transition-colors disabled:cursor-not-allowed" />
+                                <button @onclick="AddServiceRole" disabled="@(!clientDetails.ServiceAccountsRoles)" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                    <span>Add</span>
+                                </button>
+                            </div>
+                            
+                            <!-- List of roles -->
+                            <div class="bg-gray-700/20 rounded-lg p-4 border border-gray-600/30">
+                                @if (clientDetails.ServiceRoles.Any())
+                                {
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach (var (role, index) in clientDetails.ServiceRoles.Select((r, i) => (r, i)))
+                                        {
+                                            <span class="px-3 py-1.5 bg-purple-500/20 text-purple-300 rounded-full text-sm flex items-center gap-2 hover:bg-purple-500/30 transition-colors">
+                                                <span>@role</span>
+                                                <button @onclick="@(() => RemoveServiceRole(index))" class="flex items-center justify-center w-4 h-4 text-purple-300 hover:text-red-400 transition-colors">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                                                    </svg>
+                                                </button>
+                                            </span>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="text-sm text-gray-400 text-center py-4">Нет service account ролей</p>
+                                }
+                            </div>
                         </div>
-                        <span>OpenID Connect Endpoints</span>
-                    </h2>
-                    
-                    @if (clientDetails.Endpoints.Any())
-                    {
-                        <div class="space-y-3">
+                    </div>
+                }
+                else if (activeTab == "endpoints")
+                {
+                    <div class="tab-content-fade" @key="@activeTab">
+                        <h3 class="text-lg font-semibold text-white mb-4">OIDC Endpoints</h3>
+                        <div class="space-y-4">
                             @foreach (var endpoint in clientDetails.Endpoints)
                             {
-                                <div class="glass rounded-lg p-4 group hover:bg-gray-700/30 transition-colors">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex-1 mr-4">
-                                            <p class="text-white font-mono text-sm break-all">@endpoint</p>
+                                var parts = endpoint.Split(": ", 2);
+                                var label = parts.Length > 1 ? parts[0] : "Endpoint";
+                                var url = parts.Length > 1 ? parts[1] : endpoint;
+                                
+                                <div class="card-modern p-4 border border-gray-600/30">
+                                    <div class="flex items-start justify-between gap-4">
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                                </svg>
+                                                <span class="text-sm font-semibold text-gray-300">@label</span>
+                                            </div>
+                                            <code class="text-sm text-blue-300 font-mono break-all">@url</code>
                                         </div>
-                                        <button @onclick="@(() => CopyToClipboard(endpoint))" 
-                                                class="p-2 opacity-0 group-hover:opacity-100 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg transition-all flex-shrink-0"
-                                                title="Копировать">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <button @onclick="@(() => CopyToClipboard(url))" class="p-2 text-gray-400 hover:text-white hover:bg-gray-600/50 rounded-lg transition-colors flex-shrink-0">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                                             </svg>
                                         </button>
                                     </div>
                                 </div>
                             }
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="glass rounded-xl p-8 text-center">
-                            <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                            <p class="text-gray-400">Эндпоинты не найдены</p>
-                        </div>
-                    }
-                </div>
-            }
-            else if (activeTab == "events")
-            {
-                <div class="space-y-6">
-                    <h2 class="text-xl font-semibold text-white flex items-center space-x-2 pb-3 border-b border-gray-700/50">
-                        <div class="w-8 h-8 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <span>Client Events</span>
-                    </h2>
-                    
-                    @if (clientDetails.Events.Any())
-                    {
-                        <div class="space-y-3">
-                            @foreach (var evt in clientDetails.Events)
+                            @if (!clientDetails.Endpoints.Any())
                             {
-                                <div class="glass rounded-lg p-4">
-                                    <div class="flex items-start justify-between">
-                                        <div class="flex-1">
-                                            <div class="flex items-center space-x-3 mb-2">
-                                                <span class="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm font-medium">@evt.Type</span>
-                                                <span class="text-gray-400 text-sm">@evt.Time.ToString("dd.MM.yyyy HH:mm:ss")</span>
-                                            </div>
-                                            @if (!string.IsNullOrEmpty(evt.Details))
-                                            {
-                                                <p class="text-gray-300 text-sm">@evt.Details</p>
-                                            }
-                                            @if (!string.IsNullOrEmpty(evt.IpAddress))
-                                            {
-                                                <p class="text-gray-500 text-xs mt-1">IP: @evt.IpAddress</p>
-                                            }
-                                        </div>
-                                    </div>
+                                <div class="card-modern p-8 text-center">
+                                    <p class="text-sm text-gray-400">Нет endpoints</p>
                                 </div>
                             }
                         </div>
-                    }
-                    else
-                    {
-                        <div class="glass rounded-xl p-8 text-center">
-                            <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <p class="text-gray-400">События клиента не найдены</p>
+                    </div>
+                }
+                else if (activeTab == "events")
+                {
+                    <div class="tab-content-fade" @key="@activeTab">
+                        <h3 class="text-lg font-semibold text-white mb-4">Client Events</h3>
+                        
+                        <!-- Фильтры событий -->
+                        <div class="card-modern p-6 mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                                <!-- Фильтр по типу события -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Тип события</label>
+                                    <div class="select-wrapper">
+                                        <select @bind="selectedEventType" @bind:after="async () => await ApplyEventFilters()" class="w-full input-modern">
+                                            <option value="all">Все типы</option>
+                                            @foreach (var eventType in allEventTypes)
+                                            {
+                                                <option value="@eventType">@eventType.Replace("_", " ")</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Фильтр по пользователю -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Пользователь</label>
+                                    <input type="text" 
+                                           @bind="userFilter" 
+                                           @bind:after="async () => await ApplyEventFilters()"
+                                           placeholder="Введите имя пользователя или 'system'"
+                                           class="w-full input-modern" />
+                                </div>
+                                
+                                <!-- Фильтр по дате от -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Дата от</label>
+                                    <input type="datetime-local" 
+                                           @bind="dateFrom" 
+                                           @bind:after="async () => await ApplyEventFilters()"
+                                           class="w-full input-modern" />
+                                </div>
+                                
+                                <!-- Фильтр по дате до -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Дата до</label>
+                                    <input type="datetime-local" 
+                                           @bind="dateTo" 
+                                           @bind:after="async () => await ApplyEventFilters()"
+                                           class="w-full input-modern" />
+                                </div>
+                            </div>
+                            
+                            <!-- Кнопки управления -->
+                            <div class="flex gap-4">
+                                <button @onclick="async () => await ApplyEventFilters()" 
+                                        class="btn-search">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                    Найти события
+                                </button>
+                                <button @onclick="async () => await ClearEventFilters()" 
+                                        class="btn-clear">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                    Очистить фильтры
+                                </button>
+                            </div>
                         </div>
-                    }
-                </div>
-            }
+                        
+                        @if (filteredEvents.Any())
+                        {
+                            <div class="events-table @(isEventsAnimating ? "events-fade-out" : "events-fade-in")">
+                                <table class="w-full">
+                                    <thead>
+                                        <tr>
+                                            <th>Event</th>
+                                            <th>Details</th>
+                                            <th>User</th>
+                                            <th>IP Address</th>
+                                            <th>Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var evt in filteredEvents)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <div class="event-type">
+                                                        <div class="event-dot @GetEventDotClass(evt.Type)"></div>
+                                                        <span class="event-type-text">@evt.Type.Replace("_", " ")</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <p class="event-details">@evt.Details</p>
+                                                </td>
+                                                <td>
+                                                    @if (!string.IsNullOrEmpty(evt.UserId))
+                                                    {
+                                                        <div class="event-user">
+                                                            <div class="user-icon">
+                                                                <svg class="user-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                                </svg>
+                                                            </div>
+                                                            <div class="user-id">@evt.UserId</div>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="event-system">
+                                                            <div class="system-icon">
+                                                                <svg class="system-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                                                </svg>
+                                                            </div>
+                                                            <div class="system-info">
+                                                                <div class="system-text">System</div>
+                                                                <div class="system-type">Event</div>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="event-ip">
+                                                        @if (!string.IsNullOrEmpty(evt.IpAddress))
+                                                        {
+                                                            <span class="ip-address">@evt.IpAddress</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="ip-unknown">—</span>
+                                                        }
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    @{
+                                                        var moscowTime = evt.Time.AddHours(3);
+                                                    }
+                                                    <div class="event-time">
+                                                        <div class="event-date">@moscowTime.ToString("dd.MM.yyyy")</div>
+                                                        <div class="event-time-only">@moscowTime.ToString("HH:mm") GMT+3</div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Пагинация событий -->
+                            @if (hasAppliedFilters && GetTotalEventsPages() > 1)
+                            {
+                                <div class="flex items-center justify-between px-4 py-3 border-t border-gray-700/50">
+                                    <div class="text-sm text-gray-400">
+                                        Показано @((currentEventsPage - 1) * eventsPerPage + 1)-@(Math.Min(currentEventsPage * eventsPerPage, allEvents?.Count ?? 0)) из @(allEvents?.Count ?? 0) событий
+                                    </div>
+                                    
+                                    <div class="flex items-center space-x-2">
+                                        <!-- Кнопка "Предыдущая" -->
+                                        <button @onclick="@(() => GoToEventsPage(currentEventsPage - 1))" 
+                                                disabled="@(currentEventsPage <= 1)"
+                                                class="px-3 py-1.5 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                            Предыдущая
+                                        </button>
+                                        
+                                        <!-- Номера страниц -->
+                                        @{
+                                            var totalPages = GetTotalEventsPages();
+                                            var startPage = Math.Max(1, currentEventsPage - 2);
+                                            var endPage = Math.Min(totalPages, currentEventsPage + 2);
+                                        }
+                                        
+                                        @for (int i = startPage; i <= endPage; i++)
+                                        {
+                                            var pageNum = i;
+                                            <button @onclick="@(() => GoToEventsPage(pageNum))" 
+                                                    class="px-3 py-1.5 text-sm rounded-lg transition-colors @(currentEventsPage == pageNum ? "bg-blue-600 text-white" : "bg-gray-700/50 hover:bg-gray-600/50 text-gray-300")">
+                                                @pageNum
+                                            </button>
+                                        }
+                                        
+                                        <!-- Кнопка "Следующая" -->
+                                        <button @onclick="@(() => GoToEventsPage(currentEventsPage + 1))" 
+                                                disabled="@(currentEventsPage >= GetTotalEventsPages())"
+                                                class="px-3 py-1.5 text-sm bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                            Следующая
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="card-modern p-8 text-center @(isEventsAnimating ? "events-fade-out" : "events-fade-in")">
+                                <p class="text-sm text-gray-400">Нет событий, соответствующих фильтрам</p>
+                            </div>
+                        }
+                    </div>
+                }
         </div>
     }
 </div>
@@ -768,23 +637,36 @@
 @code {
     [Parameter] public string Realm { get; set; } = string.Empty;
     [Parameter] public string ClientId { get; set; } = string.Empty;
-    
+
     private ClientDetailsDto? clientDetails;
     private bool isLoading = true;
-    private string? errorMessage;
+    private bool showLoadingIndicator = false;
+    private string? error;
     private string activeTab = "settings";
+    private string newRedirectUri = "";
+    private string newLocalRole = "";
+    private string newServiceRole = "";
+    private bool isSecretVisible = false;
+    private CancellationTokenSource? loadingCts;
+    private List<string> originalLocalRoles = new(); // Оригинальные локальные роли для сравнения
+    private List<string> originalServiceRoles = new(); // Оригинальные service account роли для сравнения
+    
+    // Фильтры для событий
+    private string selectedEventType = "all";
+    private string userFilter = "";
+    private DateTime? dateFrom;
+    private DateTime? dateTo;
+    private List<ClientEventDto> filteredEvents = new();
+    private List<ClientEventDto> allEvents = new(); // Все события без фильтрации
+    private int currentEventsPage = 1;
+    private const int eventsPerPage = 10;
+    private bool hasAppliedFilters = false; // Флаг для отслеживания применения фильтров
+    private List<string> allEventTypes = new(); // Все возможные типы событий из реалма
+    private bool isEventsAnimating = false; // Флаг анимации таблицы событий
 
     protected override async Task OnInitializedAsync()
     {
         await LoadClientDetails();
-    }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if (!string.IsNullOrEmpty(Realm) && !string.IsNullOrEmpty(ClientId))
-        {
-            await LoadClientDetails();
-        }
     }
 
     private async Task LoadClientDetails()
@@ -792,23 +674,63 @@
         try
         {
             isLoading = true;
-            errorMessage = null;
-            StateHasChanged();
+            showLoadingIndicator = false;
+            error = null;
             
+            // Отменяем предыдущий таймер, если он есть
+            loadingCts?.Cancel();
+            loadingCts = new CancellationTokenSource();
+            
+            // Запускаем таймер для показа индикатора загрузки через 200мс
+            var loadingTask = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(200, loadingCts.Token);
+                    showLoadingIndicator = true;
+                    await InvokeAsync(StateHasChanged);
+                }
+                catch (TaskCanceledException)
+                {
+                    // Загрузка завершилась быстрее 200мс
+                }
+            });
+
+            // Загружаем данные
             clientDetails = await KeycloakAdminService.GetClientDetailsAsync(ClientId, Realm);
-            
+
             if (clientDetails == null)
             {
-                errorMessage = "Не удалось загрузить детали клиента";
+                error = "Не удалось загрузить данные клиента";
             }
+            
+            // Инициализируем события без фильтрации (только первые 10)
+            allEvents = clientDetails?.Events?.ToList() ?? new List<ClientEventDto>();
+            filteredEvents = allEvents.Take(eventsPerPage).ToList();
+            hasAppliedFilters = false;
+            
+            // Сохраняем оригинальные роли для сравнения при сохранении
+            originalLocalRoles = clientDetails?.LocalRoles?.ToList() ?? new List<string>();
+            originalServiceRoles = clientDetails?.ServiceRoles?.ToList() ?? new List<string>();
+            
+            // Загружаем все возможные типы событий для select
+            await LoadAllEventTypes();
         }
         catch (Exception ex)
         {
-            errorMessage = $"Ошибка при загрузке деталей: {ex.Message}";
+            error = $"Ошибка: {ex.Message}";
         }
         finally
         {
+            loadingCts?.Cancel();
             isLoading = false;
+            showLoadingIndicator = false;
+            
+            // Инициализируем события без фильтрации (только первые 10)
+            allEvents = clientDetails?.Events?.ToList() ?? new List<ClientEventDto>();
+            filteredEvents = allEvents.Take(eventsPerPage).ToList();
+            hasAppliedFilters = false;
+            
             StateHasChanged();
         }
     }
@@ -818,16 +740,105 @@
         await LoadClientDetails();
     }
 
-    private Task SaveChanges()
+    private async Task SaveChanges()
     {
-        // TODO: Реализовать сохранение изменений
-        return Task.CompletedTask;
+        if (clientDetails == null) return;
+        
+        // Валидация: если Standard Flow включен, должен быть хотя бы один Redirect URI
+        if (clientDetails.StandardFlow && !clientDetails.RedirectUris.Any())
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Ошибка: При включенном Standard Flow необходимо добавить хотя бы один Valid Redirect URI");
+            return;
+        }
+
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+            
+            // Сохраняем изменения через KeycloakAdminService
+            await KeycloakAdminService.UpdateClientDetailsAsync(clientDetails);
+            
+            // Синхронизируем локальные роли если они изменились
+            if (!originalLocalRoles.SequenceEqual(clientDetails.LocalRoles))
+            {
+                await KeycloakAdminService.SyncClientLocalRolesAsync(
+                    clientDetails.ClientId, 
+                    clientDetails.Realm, 
+                    clientDetails.Id, 
+                    originalLocalRoles, 
+                    clientDetails.LocalRoles);
+            }
+            
+            // Синхронизируем service account роли если они изменились
+            if (!originalServiceRoles.SequenceEqual(clientDetails.ServiceRoles))
+            {
+                await KeycloakAdminService.SyncServiceAccountRolesAsync(
+                    clientDetails.ClientId, 
+                    clientDetails.Realm, 
+                    clientDetails.Id, 
+                    originalServiceRoles, 
+                    clientDetails.ServiceRoles);
+            }
+            
+            await JSRuntime.InvokeVoidAsync("alert", "Изменения успешно сохранены!");
+            
+            // Перезагружаем данные клиента для синхронизации
+            await LoadClientDetails();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Ошибка при сохранении: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
-    private Task DeleteClient()
+    private void OnStandardFlowChanged()
     {
-        // TODO: Реализовать удаление клиента
-        return Task.CompletedTask;
+        // Обновляем UI после изменения Standard Flow
+        StateHasChanged();
+    }
+
+    private void OnClientAuthenticationChanged()
+    {
+        if (clientDetails != null)
+        {
+            // Если Client Authentication выключен, автоматически выключаем Service Accounts
+            if (!clientDetails.ClientAuthentication && clientDetails.ServiceAccountsRoles)
+            {
+                clientDetails.ServiceAccountsRoles = false;
+            }
+            StateHasChanged();
+        }
+    }
+
+    private void OnServiceAccountsChanged()
+    {
+        // Обновляем UI после изменения Service Accounts
+        StateHasChanged();
+    }
+
+    private void ToggleClientStatus()
+    {
+        if (clientDetails != null)
+        {
+            clientDetails.Enabled = !clientDetails.Enabled;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteClient()
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Вы уверены, что хотите удалить этого клиента?");
+        if (confirmed)
+        {
+            // TODO: Implement delete
+            NavigateBack();
+        }
     }
 
     private void NavigateBack()
@@ -835,94 +846,324 @@
         Navigation.NavigateTo("/admin/clients");
     }
 
-    // Tab selection methods
-    private void SelectSettingsTab() => activeTab = "settings";
-    private void SelectCredentialsTab() => activeTab = "credentials";
-    private void SelectRolesTab() => activeTab = "roles";
-    private void SelectEndpointsTab() => activeTab = "endpoints";
-    private void SelectEventsTab() => activeTab = "events";
-
-    private string GetTabClass(string tabName)
+    private void ToggleSecretVisibility()
     {
-        var baseClass = "px-3 py-2 rounded-lg transition-all duration-200";
-        var activeClass = "bg-blue-600 text-white shadow-md";
-        var inactiveClass = "text-gray-400 hover:text-white hover:bg-gray-700/50";
-        
-        return $"{baseClass} {(activeTab == tabName ? activeClass : inactiveClass)}";
-    }
-
-    private async Task ToggleSecretVisibility()
-    {
-        await JSRuntime.InvokeVoidAsync("togglePasswordVisibility", "clientSecret");
+        isSecretVisible = !isSecretVisible;
     }
 
     private async Task CopyToClipboard(string text)
     {
-        try
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+
+    private async Task RegenerateSecret()
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Вы уверены, что хотите сгенерировать новый secret? Старый secret станет недействительным!");
+        if (confirmed && clientDetails != null)
         {
-            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
-        }
-        catch (Exception)
-        {
-            // Fallback
+            try
+            {
+                var newSecret = await KeycloakAdminService.RegenerateClientSecretAsync(
+                    clientDetails.ClientId, 
+                    clientDetails.Realm, 
+                    clientDetails.Id);
+                
+                if (newSecret != null)
+                {
+                    clientDetails.ClientSecret = newSecret;
+                    StateHasChanged();
+                    await JSRuntime.InvokeVoidAsync("alert", $"Secret успешно регенерирован!");
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "Ошибка: не удалось регенерировать secret");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Ошибка при регенерации secret: {ex.Message}");
+            }
         }
     }
-    
-    private Task RegenerateSecret()
+
+    private async Task AddRedirectUri()
     {
-        // TODO: Реализовать регенерацию секрета
-        return Task.CompletedTask;
-    }
-    
-    private void AddRedirectUri()
-    {
-        if (clientDetails != null)
+        if (!string.IsNullOrWhiteSpace(newRedirectUri) && clientDetails != null)
         {
-            clientDetails.RedirectUris.Add("");
+            var uri = newRedirectUri.Trim();
+            
+            // Проверка на корректность URL
+            if (!IsValidRedirectUri(uri))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Ошибка: Некорректный URL. Используйте формат: https://example.com/callback или http://localhost:3000/callback");
+                return;
+            }
+            
+            // Проверка на дубликаты
+            if (clientDetails.RedirectUris.Contains(uri))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Ошибка: Этот URI уже добавлен");
+                return;
+            }
+            
+            clientDetails.RedirectUris.Add(uri);
+            newRedirectUri = "";
             StateHasChanged();
         }
+    }
+    
+    private bool IsValidRedirectUri(string uri)
+    {
+        // Пустая строка - невалидна
+        if (string.IsNullOrWhiteSpace(uri))
+            return false;
+        
+        // Специальные случаи для KeyCloak
+        if (uri == "*" || uri.StartsWith("urn:"))
+            return true;
+        
+        // Проверка на валидный URL
+        if (!Uri.TryCreate(uri, UriKind.Absolute, out var uriResult))
+            return false;
+        
+        // Проверка схемы (http, https)
+        if (uriResult.Scheme != Uri.UriSchemeHttp && uriResult.Scheme != Uri.UriSchemeHttps)
+            return false;
+        
+        return true;
     }
 
     private void RemoveRedirectUri(int index)
     {
-        if (clientDetails != null && index >= 0 && index < clientDetails.RedirectUris.Count)
+        clientDetails?.RedirectUris.RemoveAt(index);
+        StateHasChanged();
+    }
+
+    private void AddLocalRole()
+    {
+        if (!string.IsNullOrWhiteSpace(newLocalRole) && clientDetails != null)
         {
-            clientDetails.RedirectUris.RemoveAt(index);
+            if (!clientDetails.LocalRoles.Contains(newLocalRole.Trim()))
+            {
+                clientDetails.LocalRoles.Add(newLocalRole.Trim());
+                newLocalRole = "";
+                StateHasChanged();
+            }
+        }
+    }
+
+    private void RemoveLocalRole(int index)
+    {
+        if (clientDetails != null && index >= 0 && index < clientDetails.LocalRoles.Count)
+        {
+            clientDetails.LocalRoles.RemoveAt(index);
             StateHasChanged();
         }
     }
 
-    private void UpdateRedirectUri(int index, string value)
+    private void AddServiceRole()
     {
-        if (clientDetails != null && index >= 0 && index < clientDetails.RedirectUris.Count)
+        if (!string.IsNullOrWhiteSpace(newServiceRole) && clientDetails != null)
         {
-            clientDetails.RedirectUris[index] = value;
+            if (!clientDetails.ServiceRoles.Contains(newServiceRole.Trim()))
+            {
+                clientDetails.ServiceRoles.Add(newServiceRole.Trim());
+                newServiceRole = "";
+                StateHasChanged();
+            }
         }
     }
 
-    private void AddWebOrigin()
+    private void RemoveServiceRole(int index)
     {
-        if (clientDetails != null)
+        if (clientDetails != null && index >= 0 && index < clientDetails.ServiceRoles.Count)
         {
-            clientDetails.WebOrigins.Add("");
+            clientDetails.ServiceRoles.RemoveAt(index);
             StateHasChanged();
         }
     }
 
-    private void RemoveWebOrigin(int index)
+    private string GetEventDotClass(string eventType)
     {
-        if (clientDetails != null && index >= 0 && index < clientDetails.WebOrigins.Count)
+        return eventType switch
         {
-            clientDetails.WebOrigins.RemoveAt(index);
-            StateHasChanged();
+            "LOGIN" => "event-dot-success",
+            "CLIENT_LOGIN" => "event-dot-success",
+            "CODE_TO_TOKEN" => "event-dot-success", 
+            "CLIENT_LOGIN_ERROR" => "event-dot-error",
+            _ => "event-dot-default"
+        };
+    }
+
+    private async Task ApplyEventFilters()
+    {
+        await AnimateEventsUpdate(async () =>
+        {
+            // Проверяем, есть ли активные фильтры
+            bool hasFilters = selectedEventType != "all" || 
+                             !string.IsNullOrWhiteSpace(userFilter) || 
+                             dateFrom.HasValue || 
+                             dateTo.HasValue;
+
+            if (hasFilters)
+            {
+                // Если есть фильтры, загружаем все события
+                await LoadAllEventsForFiltering();
+                hasAppliedFilters = true;
+            }
+            else
+            {
+                // Если фильтров нет, используем только первые 10 событий
+                allEvents = clientDetails?.Events?.ToList() ?? new List<ClientEventDto>();
+                hasAppliedFilters = false;
+            }
+
+            // Применяем фильтры к событиям
+            var events = allEvents.AsEnumerable();
+
+            // Фильтр по типу события (более точный)
+            if (selectedEventType != "all")
+            {
+                events = events.Where(e => e.Type.Equals(selectedEventType, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // Фильтр по пользователю (ввод текста)
+            if (!string.IsNullOrWhiteSpace(userFilter))
+            {
+                events = events.Where(e => 
+                    (!string.IsNullOrEmpty(e.UserId) && e.UserId.Contains(userFilter, StringComparison.OrdinalIgnoreCase)) ||
+                    (string.IsNullOrEmpty(e.UserId) && userFilter.Equals("system", StringComparison.OrdinalIgnoreCase)));
+            }
+
+            // Фильтр по дате от (с временем)
+            if (dateFrom.HasValue)
+            {
+                events = events.Where(e => e.Time >= dateFrom.Value);
+            }
+
+            // Фильтр по дате до (с временем)
+            if (dateTo.HasValue)
+            {
+                events = events.Where(e => e.Time <= dateTo.Value);
+            }
+
+            allEvents = events.OrderByDescending(e => e.Time).ToList();
+            currentEventsPage = 1; // Сбрасываем на первую страницу при применении фильтров
+            UpdateFilteredEvents();
+        });
+    }
+
+    private async Task LoadAllEventsForFiltering()
+    {
+        try
+        {
+            var allEventsFromApi = await KeycloakAdminService.GetAllClientEventsAsync(ClientId, Realm);
+            allEvents = allEventsFromApi.ToList();
+        }
+        catch (Exception ex)
+        {
+            // В случае ошибки используем события из clientDetails
+            allEvents = clientDetails?.Events?.ToList() ?? new List<ClientEventDto>();
+            await JSRuntime.InvokeVoidAsync("alert", $"Ошибка загрузки всех событий: {ex.Message}");
         }
     }
 
-    private void UpdateWebOrigin(int index, string value)
+    private async Task LoadAllEventTypes()
     {
-        if (clientDetails != null && index >= 0 && index < clientDetails.WebOrigins.Count)
+        try
         {
-            clientDetails.WebOrigins[index] = value;
+            var eventTypesFromApi = await KeycloakAdminService.GetAllEventTypesAsync(Realm);
+            allEventTypes = eventTypesFromApi.ToList();
         }
+        catch (Exception ex)
+        {
+            // В случае ошибки используем типы из уже загруженных событий
+            allEventTypes = GetUniqueEventTypes();
+            await JSRuntime.InvokeVoidAsync("alert", $"Ошибка загрузки типов событий: {ex.Message}");
+        }
+    }
+
+    private async Task AnimateEventsUpdate(Func<Task> updateAction)
+    {
+        // Запускаем анимацию fade-out
+        isEventsAnimating = true;
+        StateHasChanged();
+        
+        // Ждем завершения fade-out анимации
+        await Task.Delay(200);
+        
+        // Выполняем обновление данных
+        await updateAction();
+        
+        // Ждем небольшую паузу перед fade-in
+        await Task.Delay(100);
+        
+        // Запускаем анимацию fade-in
+        isEventsAnimating = false;
+        StateHasChanged();
+    }
+
+    private void UpdateFilteredEvents()
+    {
+        if (allEvents == null)
+        {
+            filteredEvents = new List<ClientEventDto>();
+            return;
+        }
+
+        // Применяем пагинацию
+        filteredEvents = allEvents
+            .Skip((currentEventsPage - 1) * eventsPerPage)
+            .Take(eventsPerPage)
+            .ToList();
+    }
+
+    private int GetTotalEventsPages()
+    {
+        if (allEvents == null || !allEvents.Any()) return 0;
+        return (int)Math.Ceiling((double)allEvents.Count / eventsPerPage);
+    }
+
+    private async Task GoToEventsPage(int page)
+    {
+        var totalPages = GetTotalEventsPages();
+        if (page >= 1 && page <= totalPages)
+        {
+            await AnimateEventsUpdate(async () =>
+            {
+                currentEventsPage = page;
+                UpdateFilteredEvents();
+            });
+        }
+    }
+
+    private async Task ClearEventFilters()
+    {
+        await AnimateEventsUpdate(async () =>
+        {
+            selectedEventType = "all";
+            userFilter = "";
+            dateFrom = null;
+            dateTo = null;
+            currentEventsPage = 1;
+            hasAppliedFilters = false;
+            
+            // Возвращаемся к исходному состоянию - только первые 10 событий
+            allEvents = clientDetails?.Events?.ToList() ?? new List<ClientEventDto>();
+            filteredEvents = allEvents.Take(eventsPerPage).ToList();
+        });
+    }
+
+    private List<string> GetUniqueEventTypes()
+    {
+        if (clientDetails?.Events == null) return new List<string>();
+        
+        return clientDetails.Events
+            .Select(e => e.Type) // Берем полный тип события
+            .Distinct()
+            .OrderBy(t => t)
+            .ToList();
+    }
+
     }
 }

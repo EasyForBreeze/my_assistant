@@ -44,6 +44,11 @@ public interface IKeycloakAdminService
     Task<string> RegenerateClientSecretAsync(string clientId, CancellationToken cancellationToken = default);
     
     /// <summary>
+    /// Сгенерировать новый секрет для клиента (с указанием realm и internal ID).
+    /// </summary>
+    Task<string?> RegenerateClientSecretAsync(string clientId, string realm, string internalId, CancellationToken cancellationToken = default);
+    
+    /// <summary>
     /// Поиск клиентов по подстроке во всех реалмах (кроме master).
     /// </summary>
     Task<ClientsSearchResponse> SearchClientsAsync(string searchTerm, CancellationToken cancellationToken = default);
@@ -72,6 +77,16 @@ public interface IKeycloakAdminService
     Task<IEnumerable<ClientEventDto>> GetClientEventsAsync(string clientId, string realm, CancellationToken cancellationToken = default);
     
     /// <summary>
+    /// Получить все события клиента для фильтрации.
+    /// </summary>
+    Task<IEnumerable<ClientEventDto>> GetAllClientEventsAsync(string clientId, string realm, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Получить все возможные типы событий из реалма.
+    /// </summary>
+    Task<IEnumerable<string>> GetAllEventTypesAsync(string realm, CancellationToken cancellationToken = default);
+    
+    /// <summary>
     /// Получить роли клиента (локальные и сервисные).
     /// </summary>
     Task<(List<string> LocalRoles, List<string> ServiceRoles)> GetClientRolesAsync(string clientId, string realm, CancellationToken cancellationToken = default);
@@ -80,6 +95,21 @@ public interface IKeycloakAdminService
     /// Получить эндпоинты клиента.
     /// </summary>
     Task<List<string>> GetClientEndpointsAsync(string clientId, string realm, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Обновить детали клиента в Keycloak.
+    /// </summary>
+    Task UpdateClientDetailsAsync(ClientDetailsDto clientDetails, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Синхронизировать локальные роли клиента с Keycloak.
+    /// </summary>
+    Task SyncClientLocalRolesAsync(string clientId, string realm, string internalId, List<string> currentRoles, List<string> newRoles, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Синхронизировать service account роли с Keycloak.
+    /// </summary>
+    Task SyncServiceAccountRolesAsync(string clientId, string realm, string internalId, List<string> currentRoles, List<string> newRoles, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
